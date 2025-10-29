@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">ToDo List</string>
+    <string name="hint_email_text"> Masukkan Email </string>
+    <string name="hint_password_text"> Masukkan Password </string>
+    <string name="hint_password2_text"> Konfirmasi Password </string>
+    <string name="hint_pencarian_text"> Telusuri </string>
+    <string name="btn_password_text">Password</string>
+    <string name="btn_register_text">Daftar?</string>
+    <string name="btn_in_text">Masuk</string>
+    <string name="btn_add_task">Masuk</string>
+    <string name="label_login">LOGIN</string>
+    <string name="label_menu">LOGIN</string>
+    <string name="label_telusuri">Telusuri</string>
+    <string name="label_register">DAFTAR</string>
+    <string name="desc_profile_image">Gambar Profil Pengguna</string>
+    <string name="desc_icon_filter">Tombol Filter</string>
+    <string name="desc_sort_icon">Tombol Sortir</string>
+    <string name="desc_menu_button">Tombol Menu Navigasi</string>
+    <string name="desc_add_task_fab">Tombol Menu tambah</string>
+
+    <string name="desc_logo_app">Logo aplikasi ToDo List berupa ikon daftar centang.</string>
+</resources>
