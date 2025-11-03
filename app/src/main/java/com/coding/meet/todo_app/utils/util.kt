@@ -46,7 +46,7 @@ fun Dialog.setupDialog(layoutResId: Int){
 fun validateEditText(editText: EditText, textTextInputLayout: TextInputLayout): Boolean {
     return when {
         editText.text.toString().trim().isEmpty() -> {
-            textTextInputLayout.error = "Required"
+            textTextInputLayout.error = " Silahkan isi "
             false
         }
         else -> {

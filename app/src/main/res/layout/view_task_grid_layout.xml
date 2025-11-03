@@ -1,69 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    style="@style/CardViewStyle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="4dp"
-    android:layout_marginVertical="4dp"
-    android:foreground="?android:attr/selectableItemBackground"
-    app:cardBackgroundColor="@color/white"
-    app:cardElevation="10dp">
 
+    android:layout_margin="8dp"
+
+    app:cardBackgroundColor="#f5f5dc"  app:cardCornerRadius="10dp" app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="12dp">
 
         <TextView
-            android:id="@+id/titleTxt"
+            android:id="@+id/tvNoteTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Title"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:maxLines="2"
+            android:ellipsize="end"
+
+            android:text="@string/label_judul"  android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@android:color/black" />
 
         <TextView
-            android:id="@+id/descrTxt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginVertical="4dp"
-            android:text="Description"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/dateTxt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginVertical="4dp"
-            android:text="Date"
-            android:textSize="18sp" />
-
-
-        <LinearLayout
-            android:id="@+id/editDeleteL"
+            android:id="@+id/tvModifiedDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:text="@string/default_date_preview"
+            android:textSize="15sp"
+            android:textColor="@android:color/black" />
 
-            <ImageView
-                android:id="@+id/editImg"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
-                android:src="@drawable/ic_edit" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="#CCCCCC"/>
 
-            <ImageView
-                android:id="@+id/deleteImg"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
-                android:src="@drawable/ic_delete" />
-        </LinearLayout>
+        <TextView
+            android:id="@+id/tvNoteContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minLines="3"
+            android:maxLines="7"
+            android:ellipsize="end"
+            android:text="@string/hint_isi_text"
+            android:textSize="15sp"
+            android:textColor="@android:color/black"/>
+
+        <ImageButton
+            android:id="@+id/editImg"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_edit"
+            app:tint="#598a75"
+            android:contentDescription="@string/desc_edit_task"/>
+
+        <ImageButton
+            android:id="@+id/deleteImg"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp" android:background="@android:color/transparent"
+            android:src="@drawable/ic_delete"
+            app:tint="#D32F2F"
+            android:contentDescription="@string/desc_delete_task"/>
     </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+</androidx.cardview.widget.CardView>

@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -78,8 +79,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(mainBinding.root)
 
         // START: Logika Header Baru Anda
-        val menuButton = mainBinding.root.findViewById<Button>(R.id.menu_button)
-        val chipContainer = mainBinding.root.findViewById<com.google.android.material.button.MaterialButton>(R.id.chipContainer)
+        val menuButton = mainBinding.root.findViewById< ImageButton >(R.id.menu_button)
+        val chipContainer = mainBinding.root.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.chipContainer)
         val profileCard = mainBinding.root.findViewById<androidx.cardview.widget.CardView>(R.id.profileCard)
 
         menuButton.setOnClickListener {

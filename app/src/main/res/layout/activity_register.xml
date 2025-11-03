@@ -119,7 +119,7 @@
       app:cornerRadius="10dp"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toBottomOf="@+id/et_password"
+      app:layout_constraintTop_toBottomOf="@+id/et_password2"
       android:layout_marginTop="20dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

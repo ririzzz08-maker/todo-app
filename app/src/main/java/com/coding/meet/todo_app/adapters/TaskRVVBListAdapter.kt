@@ -55,13 +55,23 @@ class TaskRVVBListAdapter(
             task: Task,
             deleteUpdateCallback: (type: String, position: Int, task: Task) -> Unit,
         ) {
-            viewTaskGridLayoutBinding.titleTxt.text = task.title
-            viewTaskGridLayoutBinding.descrTxt.text = task.description
+            // ... di dalam GridTaskViewHolder (sekitar Baris 53)
 
-            val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
 
-            viewTaskGridLayoutBinding.dateTxt.text = dateFormat.format(task.date)
+             {
+                // PERBAIKAN JUDUL
+                viewTaskGridLayoutBinding.tvNoteTitle.text = task.title // DIKOREKSI
 
+                // PERBAIKAN ISI CATATAN
+                viewTaskGridLayoutBinding.tvNoteContent.text = task.description // DIKOREKSI
+
+                val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
+
+                // PERBAIKAN TANGGAL
+                viewTaskGridLayoutBinding.tvModifiedDate.text = dateFormat.format(task.date) // DIKOREKSI
+
+                // ... Logika delete dan edit di bawahnya tetap sama ...
+            }
             viewTaskGridLayoutBinding.deleteImg.setOnClickListener {
                 if (adapterPosition != -1) {
                     deleteUpdateCallback("delete", adapterPosition, task)
