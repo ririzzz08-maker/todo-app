@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <style name="Base.Theme.TodoApp" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/mainBackgroundColor</item> <item name="colorPrimaryVariant">@color/black</item>     <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/mainBackgroundColor</item> <item name="colorSecondaryVariant">@color/black</item>   <item name="colorOnSecondary">@color/black</item>
