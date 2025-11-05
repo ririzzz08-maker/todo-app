@@ -1,11 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.TodoApp" parent="Theme.Material3.Light.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-
-        <item name="fontFamily">@font/ubuntu_mono_regular</item>
+    <style name="Base.Theme.TodoApp" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/mainBackgroundColor</item> <item name="colorPrimaryVariant">@color/black</item>     <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/mainBackgroundColor</item> <item name="colorSecondaryVariant">@color/black</item>   <item name="colorOnSecondary">@color/black</item>
         <item name="android:statusBarColor">@color/black</item>
+
+        <item name="android:fontFamily">@font/roboto_family</item>
+        <item name="fontFamily">@font/roboto_family</item>
     </style>
 
     <style name="Theme.TodoApp" parent="Base.Theme.TodoApp" />
