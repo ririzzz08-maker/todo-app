@@ -5,12 +5,15 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
@@ -41,12 +44,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
+import androidx.drawerlayout.widget.DrawerLayout
 
 class MainActivity : AppCompatActivity() {
 
     private val mainBinding: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
+    private lateinit var drawerLayout: DrawerLayout
 
     private val addTaskDialog: Dialog by lazy {
         Dialog(this, R.style.DialogCustomTheme).apply {
@@ -78,47 +83,79 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(mainBinding.root)
 
-        // START: Logika Header Baru Anda
-        val menuButton = mainBinding.root.findViewById< ImageButton >(R.id.menu_button)
-        val chipContainer = mainBinding.root.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.chipContainer)
-        val profileCard = mainBinding.root.findViewById<androidx.cardview.widget.CardView>(R.id.profileCard)
+        // Inisialisasi drawerLayout dari binding
+        drawerLayout = mainBinding.drawerLayout
 
-        menuButton.setOnClickListener {
-            Toast.makeText(this, "Membuka Menu Navigasi", Toast.LENGTH_SHORT).show()
+        // Pastikan drawer tertutup saat aplikasi mulai tanpa animasi
+        drawerLayout.closeDrawer(GravityCompat.START, false)
+
+        // Tombol menu untuk membuka drawer
+        mainBinding.menuButton.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        chipContainer.setOnClickListener {
-            callSortByDialog()
+        // Tangani klik area konten utama agar drawer tertutup saat pengguna mengetuk area tersebut
+        mainBinding.nestedScrollView.setOnClickListener {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START)
+            }
         }
 
-        profileCard.setOnClickListener {
-            Toast.makeText(this, "Membuka Detail Profil", Toast.LENGTH_SHORT).show()
+        // Listener elemen UI lainnya (chipContainer, profileCard, iconFilter, iconSort, tvTelusuri)
+        mainBinding.chipContainer.setOnClickListener {
+            Toast.makeText(this, "Chip Container Diklik", Toast.LENGTH_SHORT).show()
         }
-        // END: Logika Header Baru Anda
 
-        // Add task start
+        mainBinding.profileCard.setOnClickListener {
+            Toast.makeText(this, "Tombol Profil Diklik", Toast.LENGTH_SHORT).show()
+        }
+
+        mainBinding.iconFilter.setOnClickListener {
+            showSortBottomSheet()
+        }
+
+        mainBinding.iconSort.setOnClickListener {
+            Toast.makeText(this, "Mengubah Urutan Sortir", Toast.LENGTH_SHORT).show()
+        }
+
+        mainBinding.tvTelusuri.setOnClickListener {
+            mainBinding.edSearchActual.visibility = View.VISIBLE
+            mainBinding.edSearchEdit.requestFocus()
+            Toast.makeText(this, "Input Pencarian Aktif", Toast.LENGTH_SHORT).show()
+        }
+
+        // Setup dialogs, RecyclerView, LiveData, dan semua fungsi lainnya
+        setupAddTaskDialog()
+        setupUpdateTaskDialog()
+        setupRecyclerView()
+
+        callGetTaskList()
+        callSortByLiveData()
+        statusCallback()
+        setupSearch()
+    }
+
+    // Fungsi Setup Dialog Add Task
+    private fun setupAddTaskDialog() {
         val addCloseImg = addTaskDialog.findViewById<ImageView>(R.id.closeImg)
         addCloseImg.setOnClickListener { addTaskDialog.dismiss() }
 
         val addETTitle = addTaskDialog.findViewById<TextInputEditText>(R.id.edTaskTitle)
         val addETTitleL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
-
         addETTitle.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun afterTextChanged(s: Editable) {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
                 validateEditText(addETTitle, addETTitleL)
             }
-
         })
 
         val addETDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.edTaskDesc)
         val addETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL)
-
         addETDesc.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun afterTextChanged(s: Editable) {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
                 validateEditText(addETDesc, addETDescL)
             }
         })
@@ -128,12 +165,10 @@ class MainActivity : AppCompatActivity() {
             clearEditText(addETDesc, addETDescL)
             addTaskDialog.show()
         }
+
         val saveTaskBtn = addTaskDialog.findViewById<Button>(R.id.saveTaskBtn)
         saveTaskBtn.setOnClickListener {
-            if (validateEditText(addETTitle, addETTitleL)
-                && validateEditText(addETDesc, addETDescL)
-            ) {
-
+            if (validateEditText(addETTitle, addETTitleL) && validateEditText(addETDesc, addETDescL)) {
                 val newTask = Task(
                     UUID.randomUUID().toString(),
                     addETTitle.text.toString().trim(),
@@ -145,137 +180,117 @@ class MainActivity : AppCompatActivity() {
                 taskViewModel.insertTask(newTask)
             }
         }
-        // Add task end
+    }
 
-
-        // Update Task Start
+    // Fungsi Setup Dialog Update Task
+    private fun setupUpdateTaskDialog() {
         val updateETTitle = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskTitle)
         val updateETTitleL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
-
         updateETTitle.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun afterTextChanged(s: Editable) {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
                 validateEditText(updateETTitle, updateETTitleL)
             }
-
         })
 
         val updateETDesc = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskDesc)
         val updateETDescL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL)
-
         updateETDesc.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun afterTextChanged(s: Editable) {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
                 validateEditText(updateETDesc, updateETDescL)
             }
         })
 
         val updateCloseImg = updateTaskDialog.findViewById<ImageView>(R.id.closeImg)
         updateCloseImg.setOnClickListener { updateTaskDialog.dismiss() }
+    }
 
-        val updateTaskBtn = updateTaskDialog.findViewById<Button>(R.id.updateTaskBtn)
-
-        // Update Task End
-
-        isListMutableLiveData.observe(this){
-            if (it){
-                mainBinding.taskRV.layoutManager = LinearLayoutManager(
-                    this,LinearLayoutManager.VERTICAL,false
-                )
-                // Hapus baris listOrGridImg.setImageResource yang lama
-            }else{
-                mainBinding.taskRV.layoutManager = StaggeredGridLayoutManager(
-                    2,LinearLayoutManager.VERTICAL
-                )
-                // Hapus baris listOrGridImg.setImageResource yang lama
+    // Fungsi Setup RecyclerView dan Adapter
+    private fun setupRecyclerView() {
+        isListMutableLiveData.observe(this) {
+            mainBinding.taskRV.layoutManager = if (it) {
+                LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+            } else {
+                StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
             }
         }
 
-        // Hapus setOnClickListener yang merujuk listOrGridImg yang lama
-
-        val taskRVVBListAdapter = TaskRVVBListAdapter(isListMutableLiveData ) { type, position, task ->
-            if (type == "delete") {
-                taskViewModel
-                    .deleteTaskUsingId(task.id)
-                restoreDeletedTask(task)
-            } else if (type == "update") {
-                updateETTitle.setText(task.title)
-                updateETDesc.setText(task.description)
-                updateTaskBtn.setOnClickListener {
-                    if (validateEditText(updateETTitle, updateETTitleL)
-                        && validateEditText(updateETDesc, updateETDescL)
-                    ) {
-                        val updateTask = Task(
-                            task.id,
-                            updateETTitle.text.toString().trim(),
-                            updateETDesc.text.toString().trim(),
-                            Date()
-                        )
-                        hideKeyBoard(it)
-                        updateTaskDialog.dismiss()
-                        taskViewModel.updateTask(updateTask)
-                    }
+        val adapter = TaskRVVBListAdapter(isListMutableLiveData) { type, _, task ->
+            when (type) {
+                "delete" -> {
+                    taskViewModel.deleteTaskUsingId(task.id)
+                    restoreDeletedTask(task)
                 }
-                updateTaskDialog.show()
+                "update" -> {
+                    val updateETTitle = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskTitle)
+                    val updateETTitleL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
+                    val updateETDesc = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskDesc)
+                    val updateETDescL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL)
+                    val updateTaskBtn = updateTaskDialog.findViewById<Button>(R.id.updateTaskBtn)
+
+                    updateETTitle.setText(task.title)
+                    updateETDesc.setText(task.description)
+
+                    updateTaskBtn.setOnClickListener {
+                        if (validateEditText(updateETTitle, updateETTitleL) &&
+                            validateEditText(updateETDesc, updateETDescL)
+                        ) {
+                            val updatedTask = Task(
+                                task.id,
+                                updateETTitle.text.toString().trim(),
+                                updateETDesc.text.toString().trim(),
+                                Date()
+                            )
+                            hideKeyBoard(it)
+                            updateTaskDialog.dismiss()
+                            taskViewModel.updateTask(updatedTask)
+                        }
+                    }
+                    updateTaskDialog.show()
+                }
             }
         }
-        mainBinding.taskRV.adapter = taskRVVBListAdapter
-        ViewCompat.setNestedScrollingEnabled(mainBinding.taskRV,false)
-        taskRVVBListAdapter.registerAdapterDataObserver(object :
-            RecyclerView.AdapterDataObserver() {
+
+        mainBinding.taskRV.adapter = adapter
+        ViewCompat.setNestedScrollingEnabled(mainBinding.taskRV, false)
+
+        adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 super.onItemRangeInserted(positionStart, itemCount)
-                mainBinding.nestedScrollView.smoothScrollTo(0,positionStart)
+                mainBinding.nestedScrollView.smoothScrollTo(0, positionStart)
             }
         })
-
-        // PANGGILAN FUNGSI DI AKHIR onCreate()
-        callGetTaskList(taskRVVBListAdapter)
-        callSortByLiveData()
-        statusCallback()
-        callSearch()
-    }
-    // AKHIR DARI onCreate()
-
-
-    // SEMUA FUNGSI LAIN HARUS DIMULAI DI SINI (SEBAGAI ANGGOTA KELAS)
-
-    private fun restoreDeletedTask(deletedTask : Task){
-        val snackBar = Snackbar.make(
-            mainBinding.root, "Deleted '${deletedTask.title}'",
-            Snackbar.LENGTH_LONG
-        )
-        snackBar.setAction("Undo"){
-            taskViewModel.insertTask(deletedTask)
-        }
-        snackBar.show()
     }
 
-    private fun callSearch() {
-        // Ganti edSearch dengan edSearchEdit yang baru
-        mainBinding.edSearchEdit.addTextChangedListener(object : TextWatcher{
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun afterTextChanged(query: Editable) {
-                if (query.toString().isNotEmpty()){
+    private fun restoreDeletedTask(deletedTask: Task) {
+        Snackbar.make(mainBinding.root, "Deleted '${deletedTask.title}'", Snackbar.LENGTH_LONG)
+            .setAction("Undo") {
+                taskViewModel.insertTask(deletedTask)
+            }.show()
+    }
+
+    private fun setupSearch() {
+        mainBinding.edSearchEdit.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(query: Editable?) {
+                if (!query.isNullOrEmpty()) {
                     taskViewModel.searchTaskList(query.toString())
-                }else{
+                } else {
                     callSortByLiveData()
                 }
             }
         })
 
-        mainBinding.edSearchEdit.setOnEditorActionListener{ v, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH){
+        mainBinding.edSearchEdit.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 hideKeyBoard(v)
-                return@setOnEditorActionListener true
-            }
-            false
+                true
+            } else false
         }
-
-        callSortByDialog()
     }
 
     private fun callSortByLiveData() {
@@ -284,72 +299,74 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun callSortByDialog() {
-        var checkedItem = 0
-        val items = arrayOf("Title Ascending", "Title Descending","Date Ascending","Date Descending")
-
-        // Hapus setOnClickListener lama (sortImg) dan pindahkan logika dialog ke sini:
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Sort By")
-            .setPositiveButton("Ok") { _, _ ->
-                when (checkedItem) {
-                    0 -> { taskViewModel.setSortBy(Pair("title",true)) }
-                    1 -> { taskViewModel.setSortBy(Pair("title",false)) }
-                    2 -> { taskViewModel.setSortBy(Pair("date",true)) }
-                    else -> { taskViewModel.setSortBy(Pair("date",false)) }
-                }
-            }
-            .setSingleChoiceItems(items, checkedItem) { _, selectedItemIndex ->
-                checkedItem = selectedItemIndex
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-    private fun statusCallback() {
-        taskViewModel
-            .statusLiveData
-            .observe(this) {
-                when (it.status) {
-                    Status.LOADING -> { loadingDialog.show() }
+    private fun callGetTaskList() {
+        CoroutineScope(Dispatchers.Main).launch {
+            taskViewModel.taskStateFlow.collectLatest { statusResult ->  // ganti 'it' menjadi statusResult
+                Log.d("status", statusResult.status.toString())
+                when (statusResult.status) {
+                    Status.LOADING -> loadingDialog.show()
                     Status.SUCCESS -> {
                         loadingDialog.dismiss()
-                        when (it.data as StatusResult) {
-                            Added -> { Log.d("StatusResult", "Added") }
-                            Deleted -> { Log.d("StatusResult", "Deleted") }
-                            Updated -> { Log.d("StatusResult", "Updated") }
+                        statusResult.data?.collect { taskList ->            // ganti 'it' menjadi taskList
+                            (mainBinding.taskRV.adapter as? TaskRVVBListAdapter)?.submitList(taskList)
                         }
-                        it.message?.let { it1 -> longToastShow(it1) }
                     }
                     Status.ERROR -> {
                         loadingDialog.dismiss()
-                        it.message?.let { it1 -> longToastShow(it1) }
+                        statusResult.message?.let { longToastShow(it) }
                     }
                 }
             }
+        }
     }
 
-    private fun callGetTaskList(taskRecyclerViewAdapter: TaskRVVBListAdapter) {
-        CoroutineScope(Dispatchers.Main).launch {
-            taskViewModel
-                .taskStateFlow
-                .collectLatest {
-                    Log.d("status", it.status.toString())
 
-                    when (it.status) {
-                        Status.LOADING -> { loadingDialog.show() }
-                        Status.SUCCESS -> {
-                            loadingDialog.dismiss()
-                            it.data?.collect { taskList ->
-                                taskRecyclerViewAdapter.submitList(taskList)
-                            }
-                        }
-                        Status.ERROR -> {
-                            loadingDialog.dismiss()
-                            it.message?.let { it1 -> longToastShow(it1) }
-                        }
+    private fun statusCallback() {
+        taskViewModel.statusLiveData.observe(this) { statusResponse -> // ganti 'it' dengan 'statusResponse'
+            when (statusResponse.status) {
+                Status.LOADING -> loadingDialog.show()
+                Status.SUCCESS -> {
+                    loadingDialog.dismiss()
+                    when (statusResponse.data as StatusResult) { // ganti 'it' menjadi 'statusResponse'
+                        Added -> Log.d("StatusResult", "Added")
+                        Deleted -> Log.d("StatusResult", "Deleted")
+                        Updated -> Log.d("StatusResult", "Updated")
                     }
+                    statusResponse.message?.let { message -> longToastShow(message) }
                 }
+                Status.ERROR -> {
+                    loadingDialog.dismiss()
+                    statusResponse.message?.let { message -> longToastShow(message) }
+                }
+            }
+        }
+    }
+    private fun showSortBottomSheet() {
+        try {
+            val bottomSheet = SortBottomSheetFragment()
+            bottomSheet.setOnSortSelectedListener { sortType ->
+                applySorting(sortType)
+            }
+            bottomSheet.show(supportFragmentManager, SortBottomSheetFragment.TAG)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error showSortBottomSheet", e)
+        }
+    }
+
+    private fun applySorting(sortType: String) {
+        when (sortType) {
+            "custom" -> {
+                taskViewModel.setSortBy(Pair("title", true))
+                Toast.makeText(this, "Urutan: Kustom (Judul A-Z)", Toast.LENGTH_SHORT).show()
+            }
+            "created_date" -> {
+                taskViewModel.setSortBy(Pair("date", true))
+                Toast.makeText(this, "Urutan: Tanggal Dibuat", Toast.LENGTH_SHORT).show()
+            }
+            "modified_date" -> {
+                taskViewModel.setSortBy(Pair("date", false))
+                Toast.makeText(this, "Urutan: Tanggal Diubah", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

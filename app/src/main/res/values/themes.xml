@@ -3,7 +3,7 @@
     <style name="Base.Theme.TodoApp" parent="Theme.Material3.Light.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-
+        <item name="colorPrimary">@color/dark_todo_green</item>
         <item name="fontFamily">@font/ubuntu_mono_regular</item>
         <item name="android:statusBarColor">@color/black</item>
     </style>

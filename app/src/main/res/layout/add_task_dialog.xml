@@ -16,9 +16,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:text="New Task"
+            android:text="@string/label_judul"
             android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_toStartOf="@+id/closeImg"
+            android:layout_alignParentStart="true"
+            android:ellipsize="end"
+            android:singleLine="true"/>
 
         <ImageView
             android:id="@+id/closeImg"
@@ -26,6 +31,7 @@
             android:layout_height="40dp"
             android:layout_alignParentEnd="true"
             android:layout_margin="8dp"
+            android:contentDescription="@string/btn_tutuptask_image"
             android:src="@drawable/ic_close" />
 
         <View
@@ -49,14 +55,16 @@
                 android:id="@+id/edTaskTitleL"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter The Task Title">
+                android:hint="@string/hint_judul2_text">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edTaskTitle"
                     android:layout_width="match_parent"
                     android:layout_height="?actionBarSize"
-                    android:background="#EAE4E8"
-                    android:inputType="text" />
+                    android:background="#f5f5dc"
+                    android:inputType="text"
+                    android:textColor="@android:color/black"
+                    android:textColorHint="@android:color/black"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -65,17 +73,19 @@
                 android:id="@+id/edTaskDescL"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter The Task Description">
+                android:hint="@string/hint_isi_text">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edTaskDesc"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#EAE4E8"
+                    android:background="#f5f5dc"
                     android:gravity="top|start"
                     android:inputType="textMultiLine"
-                    android:lines="5"
-                    android:maxLines="5" />
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/black"
+                    android:lines="10"
+                    android:maxLines="10" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -87,7 +97,7 @@
                 android:layout_marginTop="4dp"
                 android:backgroundTint="@color/black"
                 style="@style/Widget.App.Button.Fill"
-                android:text="Save Task"
+                android:text="@string/btn_saveadd_image"
                 android:textSize="20sp" />
         </LinearLayout>
     </RelativeLayout>

@@ -12,13 +12,24 @@
     <string name="btn_updatetask_text">Update Task</string>
     <string name="btn_in_text">Masuk</string>
     <string name="btn_add_task">Tambah</string>
+    <string name="btn_profile_image">Gambar Profil Pengguna</string>
+    <string name="btn_tutuptask_image">Button Close</string>
+    <string name="btn_saveadd_image">Save</string>
     <string name="label_login">LOGIN</string>
+    <string name="label_jdltalek">Urutkan Menurut</string>
+    <string name="label_rbtalek">Custom</string>
+    <string name="label_rbtalek2">Tanggal Dibuat</string>
+    <string name="label_rbtalek3">Tanggal Diubah</string>
     <string name="label_menu">LOGIN</string>
     <string name="label_judul">Catatan Baru</string>
     <string name="label_telusuri">Telusuri</string>
     <string name="label_register">DAFTAR</string>
-    <string name="btn_profile_image">Gambar Profil Pengguna</string>
-    <string name="btn_tutuptask_image">Button Close</string>
+    <string name="label_jdlmnu"> CATATAN </string>
+    <string name="label_tmbhmnu"> Tambah Catatan </string>
+    <string name="label_tdlsap"> ToDo List </string>
+    <string name="label_lblmnu"> Label </string>
+    <string name="label_allist"> Tugas </string>
+    <string name="label_plslist"> Tambah Label </string>
     <string name="desc_icon_filter">Tombol Filter</string>
     <string name="desc_sort_icon">Tombol Sortir</string>
     <string name="desc_menu_button">Tombol Menu Navigasi</string>
@@ -26,6 +37,6 @@
     <string name="default_date_preview">Diubah: 31 Oktober 2025</string>
     <string name="desc_edit_task">Edit Task Button</string>
     <string name="desc_delete_task">Delete Task Button</string>
-
     <string name="desc_logo_app">Logo aplikasi ToDo List berupa ikon daftar centang.</string>
+
 </resources>

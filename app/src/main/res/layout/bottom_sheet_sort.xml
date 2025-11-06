@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#f5f5dc">
+    <View android:layout_width="match_parent"
+        android:layout_height="0.2dp"
+        android:background="#EEEEEE"
+        android:layout_marginTop="0dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:text="@string/label_jdltalek"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:textSize="18sp" />
+
+    <RadioGroup
+        android:id="@+id/sortOptionsGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+
+        <RadioButton android:id="@+id/radioCustom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/label_rbtalek"
+            android:textColor="#000000"
+            android:textSize="12sp"
+            android:checked="true"
+            android:button="@null"
+            android:background="@drawable/bg_radio_selector"
+            android:gravity="center_vertical|start"
+            android:drawableStart="@drawable/check_icon_selector"
+            android:drawablePadding="8dp" />
+
+        <RadioButton android:id="@+id/radioDateCreated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/label_rbtalek2"
+            android:textColor="#000000"
+            android:textSize="12sp"
+            android:button="@null"
+            android:background="@drawable/bg_radio_selector"
+            android:gravity="center_vertical|start"
+            android:drawableStart="@drawable/check_icon_selector"
+            android:drawablePadding="8dp"/>
+        <RadioButton
+            android:id="@+id/radioDateModified"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/label_rbtalek3"
+            android:textColor="#000000"
+            android:textSize="12sp"
+            android:button="@null"
+            android:background="@drawable/bg_radio_selector"
+            android:gravity="center_vertical|start"
+            android:drawableStart="@drawable/check_icon_selector"
+            android:drawablePadding="8dp"/>
+    </RadioGroup>
+
+</LinearLayout>
