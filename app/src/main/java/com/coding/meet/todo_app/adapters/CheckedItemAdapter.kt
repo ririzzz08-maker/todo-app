@@ -9,6 +9,7 @@ import android.widget.EditText // <-- UBAH KE EDITTEXT
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.coding.meet.todo_app.R
+import com.coding.meet.todo_app.models.ChecklistItem // <-- TAMBAHKAN BARIS INI
 
 // Adapter untuk item yang SUDAH dicentang
 class CheckedItemAdapter(

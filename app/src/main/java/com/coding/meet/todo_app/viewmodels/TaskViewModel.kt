@@ -2,8 +2,10 @@ package com.coding.meet.todo_app.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.room.Query
+import com.coding.meet.todo_app.models.Checklist
 import com.coding.meet.todo_app.models.Task
 import com.coding.meet.todo_app.repository.TaskRepository
 import com.coding.meet.todo_app.utils.Resource
@@ -18,6 +20,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     fun setSortBy(sort:Pair<String,Boolean>){
         taskRepository.setSortBy(sort)
     }
+
+    // --- FUNGSI TASK ---
 
     fun getTaskList(isAsc : Boolean, sortByName:String) {
         taskRepository.getTaskList(isAsc, sortByName)
@@ -44,5 +48,30 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun searchTaskList(query: String){
         taskRepository.searchTaskList(query)
+    }
+
+    // --- FUNGSI CHECKLIST ---
+
+    fun insertChecklist(checklist: Checklist) {
+        taskRepository.insertChecklist(checklist)
+    }
+
+    fun updateChecklist(checklist: Checklist) {
+        taskRepository.updateChecklist(checklist)
+    }
+
+    // BARU: Fungsi untuk Hapus Checklist
+    fun deleteChecklist(checklist: Checklist) {
+        taskRepository.deleteChecklist(checklist)
+    }
+
+    val allChecklists: LiveData<List<Checklist>> = taskRepository.getAllChecklistsLiveData()
+
+    fun searchChecklist(query: String): LiveData<List<Checklist>> {
+        return taskRepository.searchChecklist(query)
+    }
+
+    fun getChecklistById(checklistId: String): LiveData<Checklist> {
+        return taskRepository.getChecklistById(checklistId)
     }
 }

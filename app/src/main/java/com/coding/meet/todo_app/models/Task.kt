@@ -14,4 +14,6 @@ data class Task(
     val title: String,
     val description: String,
     val date: Date,
+    @ColumnInfo(name = "imagePath")
+    val imagePath: String? = null
 )

@@ -15,12 +15,37 @@
         android:id="@+id/taskListFragment"
         android:name="com.coding.meet.todo_app.TaskListFragment"
         android:label="fragment_task_list"
-        tools:layout="@layout/fragment_task_list" />
+        tools:layout="@layout/fragment_task_list" >
+
+        <action
+            android:id="@+id/action_taskListFragment_to_addChecklistFragment"
+            app:destination="@id/addChecklistFragment" />
+
+        <action
+            android:id="@+id/action_taskListFragment_to_editChecklistFragment"
+            app:destination="@id/addChecklistFragment">
+
+            <argument
+                android:name="checklist_id"
+                app:argType="string"
+                app:nullable="true"
+                android:defaultValue="@null" />
+        </action>
+
+    </fragment>
 
     <fragment
         android:id="@+id/addChecklistFragment"
         android:name="com.coding.meet.todo_app.AddChecklistFragment"
         android:label="fragment_add_checklist"
-        tools:layout="@layout/fragment_add_checklist" />
+        tools:layout="@layout/fragment_add_checklist" >
+
+        <argument
+            android:name="checklist_id"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+    </fragment>
 
 </navigation>

@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.room.Query
 import com.coding.meet.todo_app.database.TaskDatabase
+import com.coding.meet.todo_app.models.Checklist
 import com.coding.meet.todo_app.models.Task
 import com.coding.meet.todo_app.utils.Resource
 import com.coding.meet.todo_app.utils.Resource.Error
@@ -17,16 +18,22 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class TaskRepository(application: Application) {
 
     private val taskDao = TaskDatabase.getInstance(application).taskDao
+    private val checklistDao = TaskDatabase.getInstance(application).checklistDao
 
 
     private val _taskStateFlow = MutableStateFlow<Resource<Flow<List<Task>>>>(Loading())
     val taskStateFlow: StateFlow<Resource<Flow<List<Task>>>>
         get() = _taskStateFlow
+
+    private val _checklistStateFlow = MutableStateFlow<Resource<Flow<List<Checklist>>>>(Loading())
+    val checklistStateFlow: StateFlow<Resource<Flow<List<Checklist>>>>
+        get() = _checklistStateFlow
 
     private val _statusLiveData = MutableLiveData<Resource<StatusResult>>()
     val statusLiveData: LiveData<Resource<StatusResult>>
@@ -44,7 +51,10 @@ class TaskRepository(application: Application) {
         _sortByLiveData.postValue(sort)
     }
 
+    // --- FUNGSI UNTUK TASK ---
+
     fun getTaskList(isAsc : Boolean, sortByName:String) {
+        // ... (kode tetap sama) ...
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 _taskStateFlow.emit(Loading())
@@ -63,6 +73,7 @@ class TaskRepository(application: Application) {
 
 
     fun insertTask(task: Task) {
+        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
@@ -74,8 +85,8 @@ class TaskRepository(application: Application) {
         }
     }
 
-
     fun deleteTask(task: Task) {
+        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
@@ -89,6 +100,7 @@ class TaskRepository(application: Application) {
     }
 
     fun deleteTaskUsingId(taskId: String) {
+        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
@@ -103,6 +115,7 @@ class TaskRepository(application: Application) {
 
 
     fun updateTask(task: Task) {
+        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
@@ -116,6 +129,7 @@ class TaskRepository(application: Application) {
     }
 
     fun updateTaskPaticularField(taskId: String, title: String, description: String) {
+        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
@@ -129,6 +143,7 @@ class TaskRepository(application: Application) {
     }
 
     fun searchTaskList(query: String) {
+        // ... (kode tetap sama) ...
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 _taskStateFlow.emit(Loading())
@@ -140,8 +155,68 @@ class TaskRepository(application: Application) {
         }
     }
 
+    // --- FUNGSI UNTUK CHECKLIST ---
+
+    fun insertChecklist(checklist: Checklist) {
+        // ... (kode tetap sama) ...
+        try {
+            _statusLiveData.postValue(Loading())
+            CoroutineScope(Dispatchers.IO).launch {
+                checklistDao.insertChecklist(checklist)
+                handleResult(1, "Inserted Checklist Successfully", StatusResult.Added)
+            }
+        } catch (e: Exception) {
+            _statusLiveData.postValue(Error(e.message.toString()))
+        }
+    }
+
+    fun updateChecklist(checklist: Checklist) {
+        // ... (kode tetap sama) ...
+        try {
+            _statusLiveData.postValue(Loading())
+            CoroutineScope(Dispatchers.IO).launch {
+                checklistDao.updateChecklist(checklist)
+                handleResult(1, "Updated Checklist Successfully", StatusResult.Updated)
+            }
+        } catch (e: Exception) {
+            _statusLiveData.postValue(Error(e.message.toString()))
+        }
+    }
+
+    // BARU: Fungsi untuk Hapus Checklist
+    fun deleteChecklist(checklist: Checklist) {
+        try {
+            _statusLiveData.postValue(Loading())
+            CoroutineScope(Dispatchers.IO).launch {
+                checklistDao.deleteChecklist(checklist)
+                // Kita gunakan StatusResult.Deleted
+                handleResult(1, "Deleted Checklist Successfully", StatusResult.Deleted)
+            }
+        } catch (e: Exception) {
+            _statusLiveData.postValue(Error(e.message.toString()))
+        }
+    }
+
+    fun getAllChecklistsLiveData(): LiveData<List<Checklist>> {
+        // ... (kode tetap sama) ...
+        return checklistDao.getAllChecklists()
+    }
+
+    fun searchChecklist(query: String): LiveData<List<Checklist>> {
+        // ... (kode tetap sama) ...
+        return checklistDao.searchChecklist("%${query}%")
+    }
+
+    fun getChecklistById(checklistId: String): LiveData<Checklist> {
+        // ... (kode tetap sama) ...
+        return checklistDao.getChecklistById(checklistId)
+    }
+
+
+    // --- FUNGSI INTERNAL ---
 
     private fun handleResult(result: Int, message: String, statusResult: StatusResult) {
+        // ... (kode tetap sama) ...
         if (result != -1) {
             _statusLiveData.postValue(Success(message, statusResult))
         } else {

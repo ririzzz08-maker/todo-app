@@ -8,6 +8,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.coding.meet.todo_app.R
+import com.coding.meet.todo_app.models.ChecklistItem
 
 // --- INI ADALAH DEFINISI "JEMBATAN" YANG BENAR ---
 interface ChecklistItemListener {
