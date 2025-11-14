@@ -4,6 +4,7 @@ plugins {
     // if use kapt
     // add this
     //id 'kotlin-kapt'
+    id 'kotlin-parcelize'
 
     // but i use ksp
     id 'com.google.devtools.ksp'
@@ -12,6 +13,9 @@ plugins {
 android {
     namespace 'com.coding.meet.todo_app'
     compileSdk 35
+    buildFeatures {
+        viewBinding true
+    }
 
     defaultConfig {
         applicationId "com.coding.meet.todo_app"
@@ -48,10 +52,13 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.google.code.gson:gson:2.10.1' // Pastikan versi terbaru jika 2.10.1 ada masalah
 
     //Lottie
     implementation "com.airbnb.android:lottie:6.1.0"
     implementation 'androidx.activity:activity:1.10.1'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.9.6'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.9.6'
 
     // Room
     def room_version = "2.5.2"

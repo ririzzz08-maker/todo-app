@@ -1,104 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    style="@style/CardViewStyle"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="10dp"
-    app:cardBackgroundColor="#f5f5dc">
+    android:padding="16dp"
+    android:background="#f5f5dc">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <ImageView
+        android:id="@+id/closeImg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_close"
+        android:padding="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="#333333"
+        android:contentDescription="@string/btn_ttpadd" />
 
-        <TextView
-            android:id="@+id/titleTaskTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:text="@string/label_judul"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:layout_toStartOf="@+id/closeImg"
-            android:layout_alignParentStart="true"
-            android:ellipsize="end"
-            android:singleLine="true"/>
+    <TextView
+        android:id="@+id/tvDialogTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/label_judul"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:textColor="#333333"
+        app:layout_constraintStart_toEndOf="@id/closeImg"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/closeImg"
+        app:layout_constraintBottom_toBottomOf="@id/closeImg" />
 
-        <ImageView
-            android:id="@+id/closeImg"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_alignParentEnd="true"
-            android:layout_margin="8dp"
-            android:contentDescription="@string/btn_tutuptask_image"
-            android:src="@drawable/ic_close" />
+    <ImageView
+        android:id="@+id/ivTaskImage"
+        android:layout_width="0dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="16dp"
+        android:background="#E0E0E0"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvDialogTitle"
+        tools:srcCompat="@tools:sample/backgrounds/scenic"
+        tools:visibility="visible"
+        android:contentDescription="@string/desc_gambar_preview" />
 
-        <View
-            android:id="@+id/viewHLine"
+    <ImageView
+        android:id="@+id/ivRemoveImage"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/circle_background_red"
+        android:contentDescription="@string/desc_tutup_button"
+        android:padding="8dp"
+        android:src="@drawable/ic_delete"
+        android:visibility="gone"
+        app:tint="@color/white"
+        app:layout_constraintEnd_toEndOf="@+id/ivTaskImage"
+        app:layout_constraintTop_toTopOf="@+id/ivTaskImage" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/edTaskTitleL"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ivTaskImage"
+        app:boxBackgroundMode="none">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/addETTitle"
             android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:layout_below="@id/titleTaskTxt"
-            android:background="@color/black" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/viewHLine"
-            android:layout_centerHorizontal="true"
-            android:layout_marginHorizontal="10dp"
-            android:layout_marginVertical="8dp"
-            android:orientation="vertical">
+            android:hint="@string/hint_judul2_text"
+            android:background="@android:color/transparent"
+            android:inputType="textCapSentences"
+            android:textColor="#333333"
+            android:textColorHint="#888888" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.App.TextInputLayout"
-                android:id="@+id/edTaskTitleL"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_judul2_text">
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/edTaskDescL"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/edTaskTitleL"
+        app:boxBackgroundMode="none">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edTaskTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="?actionBarSize"
-                    android:background="#f5f5dc"
-                    android:inputType="text"
-                    android:textColor="@android:color/black"
-                    android:textColorHint="@android:color/black"/>
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/addETDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"  android:hint="@string/hint_isi_text"
+            android:background="@android:color/transparent"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:gravity="top"
+            android:textColor="#333333"
+            android:textColorHint="#888888" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-            </com.google.android.material.textfield.TextInputLayout>
+    <ImageView
+        android:id="@+id/btnPickImage"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/ic_camera"
+        android:background="@drawable/circle_background"
+        android:padding="12dp"
+        app:tint="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/edTaskDescL"
+        android:contentDescription="@string/desc_pilihgambar_button" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.App.TextInputLayout"
-                android:id="@+id/edTaskDescL"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_isi_text">
+    <Button
+        android:id="@+id/saveBtn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_saveadd_image"
+        android:backgroundTint="@color/black"
+        android:textColor="@color/white"
+        android:layout_marginStart="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btnPickImage"
+        app:layout_constraintTop_toTopOf="@id/btnPickImage"
+        app:layout_constraintBottom_toBottomOf="@id/btnPickImage" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edTaskDesc"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#f5f5dc"
-                    android:gravity="top|start"
-                    android:inputType="textMultiLine"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/black"
-                    android:lines="10"
-                    android:maxLines="10" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/saveTaskBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="?actionBarSize"
-                android:layout_gravity="center"
-                android:layout_marginTop="4dp"
-                android:backgroundTint="@color/black"
-                style="@style/Widget.App.Button.Fill"
-                android:text="@string/btn_saveadd_image"
-                android:textSize="20sp" />
-        </LinearLayout>
-    </RelativeLayout>
-</com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

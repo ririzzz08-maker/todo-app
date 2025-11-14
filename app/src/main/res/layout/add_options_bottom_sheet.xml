@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="end"
+    android:background="@android:color/transparent"
+    android:padding="16dp">
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/option_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_ceklis"
+        android:textColor="@android:color/black"
+        app:icon="@drawable/ic_view_list"
+        app:iconTint="@android:color/black"
+        app:backgroundTint="#F5F5DC"
+        android:layout_marginBottom="16dp"/>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/option_catatan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_catatan"
+        android:textColor="@android:color/black"
+        app:icon="@android:drawable/ic_menu_edit"
+        app:iconTint="@android:color/black"
+        app:backgroundTint="#F5F5DC"
+        android:layout_marginBottom="16dp"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/option_close"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_close"
+        android:contentDescription="@string/btn_mnutmbh"
+        app:tint="@android:color/white"
+        app:backgroundTint="#333333"
+        android:layout_gravity="end" />
+
+</LinearLayout>

@@ -21,7 +21,7 @@
         android:textSize="18sp" />
 
     <RadioGroup
-        android:id="@+id/sortOptionsGroup"
+        android:id="@+id/radioGroupSort"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp">
@@ -32,14 +32,13 @@
             android:text="@string/label_rbtalek"
             android:textColor="#000000"
             android:textSize="12sp"
-            android:checked="true"
             android:button="@null"
             android:background="@drawable/bg_radio_selector"
             android:gravity="center_vertical|start"
             android:drawableStart="@drawable/check_icon_selector"
             android:drawablePadding="8dp" />
 
-        <RadioButton android:id="@+id/radioDateCreated"
+        <RadioButton android:id="@+id/radioTglCreated"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_rbtalek2"
@@ -52,7 +51,7 @@
             android:drawablePadding="8dp"/>
 
         <RadioButton
-            android:id="@+id/radioDateModified"
+            android:id="@+id/radioTglModified"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_rbtalek3"

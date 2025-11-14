@@ -3,26 +3,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
+    <group
+        android:id="@+id/group_labels"
+        android:checkableBehavior="single"> <item android:title="@string/label_lblmnu">
+        <menu>
+            <item
+                android:id="@+id/nav_tugas"
+                android:icon="@drawable/square" android:title="@string/label_lblmnu" />
 
-        <item android:title="@string/label_lblmnu">
-            <menu>
-                <item
-                    android:id="@+id/nav_tugas1"
-                    android:icon="@drawable/checkbox_icon_selector"
-                    android:title="@string/label_allist" />
-
-                <item
-                    android:id="@+id/nav_tugas2"
-                    android:icon="@drawable/checkbox_icon_selector"
-                    android:title="@string/label_allist" />
-
-                <item
-                    android:id="@+id/nav_tambah_label"
-                    android:icon="@drawable/ic_add_circle"
-                    android:title="@string/label_plslist" />
-            </menu>
-        </item>
+            <item
+                android:id="@+id/nav_tambah_label"
+                android:icon="@drawable/ic_add_circle" android:title="@string/label_tmbhmnu" />
+        </menu>
+    </item>
     </group>
+
+
 
 </menu>

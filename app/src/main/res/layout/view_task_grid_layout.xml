@@ -55,8 +55,8 @@
 
         <ImageButton
             android:id="@+id/editImg"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_edit"
             app:tint="#598a75"
@@ -64,11 +64,12 @@
 
         <ImageButton
             android:id="@+id/deleteImg"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp" android:background="@android:color/transparent"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/desc_delete_task"
             android:src="@drawable/ic_delete"
-            app:tint="#D32F2F"
-            android:contentDescription="@string/desc_delete_task"/>
+            app:tint="#D32F2F" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

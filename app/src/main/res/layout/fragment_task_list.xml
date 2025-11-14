@@ -1,26 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#598a75"
-    tools:context=".MainActivity">
+    tools:context=".TaskListFragment"> <androidx.core.widget.NestedScrollView
+    android:id="@+id/nestedScrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#598a75">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="100dp"
+        android:layout_marginTop="10dp">
 
-        <androidx.core.widget.NestedScrollView
-            android:id="@+id/nestedScrollView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"> <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="100dp"> <LinearLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="10dp"
@@ -99,61 +97,63 @@
                 <ImageButton
                     android:id="@+id/profileImage"
                     android:layout_width="48dp"
+
                     android:layout_height="48dp"
                     android:background="@android:color/transparent"
                     android:contentDescription="@string/btn_profile_image"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/incon" />
+                    android:src="@drawable/incon"
+                    android:clickable="false"
+                    android:focusable="false" />
+
             </androidx.cardview.widget.CardView>
         </LinearLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/edSearchActual"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="16dp"
-                android:visibility="gone"
-                android:hint="@string/hint_pencarian_text">
-                <com.google.android.material.textfield.TextInputEditText
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/edSearchActual"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            android:hint="@string/hint_pencarian_text">
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edSearchEdit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
                 android:imeOptions="actionSearch" />
-            </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/taskRV"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginTop="8dp"
-                android:clipToPadding="false"
-                android:minHeight="400dp"
-                android:orientation="vertical"
-                android:overScrollMode="never" />
-
-        </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
-
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/nav_host_fragment"
-            android:name="androidx.navigation.fragment.NavHostFragment"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/taskRV"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginTop="8dp"
+            android:clipToPadding="false"
+            android:minHeight="400dp"
+            android:orientation="vertical"
+            android:overScrollMode="never" />
 
-            app:defaultNavHost="true"
-            app:navGraph="@navigation/nav_graph" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
 
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="323dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="#f5f5dc"
-        app:headerLayout="@layout/nav_header"
-        app:menu="@menu/nav_menu" />
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/addTaskFABtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="80dp"
+        android:backgroundTint="@color/black"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:icon="@drawable/ic_add_circle"
+        app:iconSize="25dp"
+        app:iconTint="@color/white"
+        android:text="@string/btn_add_task"
+        android:contentDescription="@string/desc_add_task_fab"  />
 
-</androidx.drawerlayout.widget.DrawerLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
