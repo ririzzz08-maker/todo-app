@@ -3,6 +3,7 @@ package com.coding.meet.todo_app.viewmodels
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData // <-- INI ALTERNATIF BARU KITA
 import androidx.lifecycle.MutableLiveData
 import androidx.room.Query
 import com.coding.meet.todo_app.models.Checklist
@@ -21,54 +22,40 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         taskRepository.setSortBy(sort)
     }
 
-    // --- FUNGSI TASK ---
-
-    fun getTaskList(isAsc : Boolean, sortByName:String) {
-        taskRepository.getTaskList(isAsc, sortByName)
-    }
-
-    fun insertTask(task: Task){
-        taskRepository.insertTask(task)
-    }
-
-    fun deleteTask(task: Task) {
-        taskRepository.deleteTask(task)
-    }
-
-    fun deleteTaskUsingId(taskId: String){
-        taskRepository.deleteTaskUsingId(taskId)
-    }
-
-    fun updateTask(task: Task) {
-        taskRepository.updateTask(task)
-    }
-
-    fun updateTaskPaticularField(taskId: String,title:String,description:String) {
-        taskRepository.updateTaskPaticularField(taskId, title, description)
-    }
-    fun searchTaskList(query: String){
-        taskRepository.searchTaskList(query)
-    }
+    // --- FUNGSI TASK --- (Diabaikan untuk singkatnya)
+    fun getTaskList(isAsc : Boolean, sortByName:String) { taskRepository.getTaskList(isAsc, sortByName) }
+    fun insertTask(task: Task){ taskRepository.insertTask(task) }
+    fun deleteTask(task: Task) { taskRepository.deleteTask(task) }
+    fun deleteTaskUsingId(taskId: String){ taskRepository.deleteTaskUsingId(taskId) }
+    fun updateTask(task: Task) { taskRepository.updateTask(task) }
+    fun updateTaskPaticularField(taskId: String,title:String,description:String) { taskRepository.updateTaskPaticularField(taskId, title, description) }
+    fun searchTaskList(query: String){ taskRepository.searchTaskList(query) }
 
     // --- FUNGSI CHECKLIST ---
+    fun insertChecklist(checklist: Checklist) { taskRepository.insertChecklist(checklist) }
+    fun updateChecklist(checklist: Checklist) { taskRepository.updateChecklist(checklist) }
+    fun deleteChecklist(checklist: Checklist) { taskRepository.deleteChecklist(checklist) }
 
-    fun insertChecklist(checklist: Checklist) {
-        taskRepository.insertChecklist(checklist)
+    // --- ALTERNATIF: MENGGANTI Transformations dengan MediatorLiveData ---
+    val allChecklists: LiveData<List<Checklist>> = MediatorLiveData<List<Checklist>>().apply {
+        var currentSource: LiveData<List<Checklist>>? = null
+
+        addSource(sortByLiveData) { sortPair ->
+            currentSource?.let { removeSource(it) }
+
+            val newSource = taskRepository.getAllChecklistsLiveData(sortPair.second, sortPair.first)
+
+            currentSource = newSource
+
+            addSource(newSource) { checklistList ->
+                value = checklistList // Meneruskan nilai dari LiveData baru
+            }
+        }
     }
 
-    fun updateChecklist(checklist: Checklist) {
-        taskRepository.updateChecklist(checklist)
-    }
-
-    // BARU: Fungsi untuk Hapus Checklist
-    fun deleteChecklist(checklist: Checklist) {
-        taskRepository.deleteChecklist(checklist)
-    }
-
-    val allChecklists: LiveData<List<Checklist>> = taskRepository.getAllChecklistsLiveData()
-
-    fun searchChecklist(query: String): LiveData<List<Checklist>> {
-        return taskRepository.searchChecklist(query)
+    // --- searchChecklist (yang memiliki error yang sama) ---
+    fun searchChecklist(query: String, isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
+        return taskRepository.searchChecklist(query, isAsc, sortByName)
     }
 
     fun getChecklistById(checklistId: String): LiveData<Checklist> {

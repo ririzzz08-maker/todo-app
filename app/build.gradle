@@ -13,7 +13,7 @@ plugins {
 
 android {
     namespace 'com.coding.meet.todo_app'
-    compileSdk 35
+    compileSdk 34 // DIPERBAIKI: Diubah dari 35 ke 34
     buildFeatures {
         viewBinding true
     }
@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId "com.coding.meet.todo_app"
         minSdk 21
-        targetSdk 35
+        targetSdk 34 // DIPERBAIKI: Diubah dari 35 ke 34
         versionCode 1
         versionName "1.0"
 
@@ -42,9 +42,9 @@ android {
         jvmTarget = '17'
     }
 
-    buildFeatures {
-        viewBinding true
-    }
+    // buildFeatures { // DIHAPUS: Ini duplikat
+    //     viewBinding true
+    // }
 }
 
 dependencies {
@@ -53,29 +53,34 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'com.google.code.gson:gson:2.10.1' // Pastikan versi terbaru jika 2.10.1 ada masalah
-    def nav_version = "2.7.5" // Gunakan versi terbaru
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Navigasi (Versi yang benar)
+    def nav_version = "2.7.5"
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+
+    // Coil (Untuk Gambar)
     implementation "io.coil-kt:coil:2.5.0"
+
+    // BARU DITAMBAHKAN KEMBALI: Lifecycle (Untuk Transformations & ViewModel)
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.2"
 
     //Lottie
     implementation "com.airbnb.android:lottie:6.1.0"
-    implementation 'androidx.activity:activity:1.10.1'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.9.6'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.9.6'
 
-    // Room
+    // Activity
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+
+    // DIHAPUS: Ini duplikat dan versinya salah
+    // implementation 'androidx.navigation:navigation-fragment-ktx:2.9.6'
+    // implementation 'androidx.navigation:navigation-ui-ktx:2.9.6'
+
+    // Room (Database)
     def room_version = "2.5.2"
     implementation "androidx.room:room-runtime:$room_version"
-
-    // optional - Kotlin Extensions and Coroutines support for Room
     implementation "androidx.room:room-ktx:$room_version"
-
-    // To use Kotlin annotation processing tool (kapt)
-//    kapt "androidx.room:room-compiler:$room_version"
-
-    // To use Kotlin Symbol Processing (KSP)
     ksp "androidx.room:room-compiler:$room_version"
 
     testImplementation 'junit:junit:4.13.2'

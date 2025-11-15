@@ -1,86 +1,131 @@
 package com.coding.meet.todo_app.adapters
 
 import android.view.LayoutInflater
-import android.view.View // BARU: Import View
+import android.view.View
 import android.view.ViewGroup
-import androidx.core.net.toUri // BARU: Import toUri
+import androidx.core.net.toUri
+import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
+import com.coding.meet.todo_app.databinding.ItemChecklistGridBinding
 import com.coding.meet.todo_app.databinding.ItemChecklistMainBinding
 import com.coding.meet.todo_app.models.Checklist
-import coil.load // BARU: Import Coil
+import coil.load
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class ChecklistMainAdapter(
+    private val isList: MutableLiveData<Boolean>,
     private val onEditClick: (Checklist) -> Unit,
     private val onDeleteClick: (Checklist) -> Unit
-) : ListAdapter<Checklist, ChecklistMainAdapter.ViewHolder>(DiffCallback()) {
+) : ListAdapter<Checklist, ChecklistMainAdapter.ChecklistViewHolder>(DiffCallback()) {
 
-    inner class ViewHolder(private val binding: ItemChecklistMainBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    companion object {
+        const val VIEW_TYPE_LIST = 1
+        const val VIEW_TYPE_GRID = 2
+    }
 
-        fun bind(checklist: Checklist) {
-            // 1. Set Judul (Tetap)
-            binding.titleTxt.text = checklist.title
-
-            // 2. Set Tanggal (Tetap)
-            val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
-            binding.dateTxt.text = dateFormat.format(checklist.createdDate)
-
-            // 3. Hapus preview item (sesuai permintaan Anda sebelumnya)
-            // (Kita asumsikan TextView-nya sudah dihapus atau disembunyikan di XML)
-
-            // 4. BARU: Logika untuk menampilkan gambar
-            if (checklist.imagePath.isNullOrEmpty()) {
-                // Sembunyikan jika TIDAK ADA gambar
-                binding.itemImagePreview.visibility = View.GONE
-            } else {
-                // Tampilkan jika ADA gambar
-                binding.itemImagePreview.visibility = View.VISIBLE
-                // Muat gambar menggunakan Coil
-                binding.itemImagePreview.load(checklist.imagePath.toUri()) {
-                    crossfade(true) // Efek fade-in
-                    // placeholder(R.drawable.ic_placeholder) // Opsional: Ganti dengan gambar placeholder
-                    // error(R.drawable.ic_error) // Opsional: Ganti dengan gambar jika error
-                }
-            }
-
-            // 5. Handle Klik Hapus (Tetap)
-            binding.deleteImg.setOnClickListener {
-                onDeleteClick(checklist)
-            }
-
-            // 6. Handle Klik Edit (Tetap)
-            binding.editImg.setOnClickListener {
-                onEditClick(checklist)
-            }
-
-            binding.root.setOnClickListener {
-                onEditClick(checklist)
-            }
+    override fun getItemViewType(position: Int): Int {
+        return if (isList.value == true) {
+            VIEW_TYPE_LIST
+        } else {
+            VIEW_TYPE_GRID
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemChecklistMainBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
+    abstract class ChecklistViewHolder(binding: ViewBinding) : RecyclerView.ViewHolder(binding.root) {
+        abstract fun bind(
+            checklist: Checklist,
+            onEditClick: (Checklist) -> Unit,
+            onDeleteClick: (Checklist) -> Unit
         )
-        return ViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+    inner class ChecklistListViewHolder(private val binding: ItemChecklistMainBinding) :
+        ChecklistViewHolder(binding) {
+
+        override fun bind(
+            checklist: Checklist,
+            onEditClick: (Checklist) -> Unit,
+            onDeleteClick: (Checklist) -> Unit
+        ) {
+            binding.titleTxt.text = checklist.title
+
+            val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
+            binding.dateTxt.text = dateFormat.format(checklist.createdDate)
+
+            if (checklist.imagePath.isNullOrEmpty()) {
+                binding.itemImagePreview.visibility = View.GONE
+            } else {
+                binding.itemImagePreview.visibility = View.VISIBLE
+                binding.itemImagePreview.load(checklist.imagePath.toUri()) {
+                    crossfade(true)
+                }
+            }
+
+            binding.deleteImg.setOnClickListener { onDeleteClick(checklist) }
+            binding.editImg.setOnClickListener { onEditClick(checklist) }
+            binding.root.setOnClickListener { onEditClick(checklist) }
+        }
     }
 
+    inner class ChecklistGridViewHolder(private val binding: ItemChecklistGridBinding) :
+        ChecklistViewHolder(binding) {
+
+        override fun bind(
+            checklist: Checklist,
+            onEditClick: (Checklist) -> Unit,
+            onDeleteClick: (Checklist) -> Unit
+        ) {
+            binding.titleTxt.text = checklist.title
+
+            val dateFormat = SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault())
+            binding.dateTxt.text = dateFormat.format(checklist.createdDate)
+
+            // Logika Gambar dan Hapus di Grid
+            if (checklist.imagePath.isNullOrEmpty()) {
+                binding.itemImagePreview.visibility = View.GONE
+            } else {
+                binding.itemImagePreview.visibility = View.VISIBLE
+                binding.itemImagePreview.load(checklist.imagePath.toUri())
+            }
+
+            binding.deleteImg.setOnClickListener { onDeleteClick(checklist) }
+            binding.root.setOnClickListener { onEditClick(checklist) }
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChecklistViewHolder {
+        return when (viewType) {
+            VIEW_TYPE_LIST -> {
+                val binding = ItemChecklistMainBinding.inflate(
+                    LayoutInflater.from(parent.context), parent, false
+                )
+                ChecklistListViewHolder(binding)
+            }
+            VIEW_TYPE_GRID -> {
+                val binding = ItemChecklistGridBinding.inflate(
+                    LayoutInflater.from(parent.context), parent, false
+                )
+                ChecklistGridViewHolder(binding)
+            }
+            else -> throw IllegalArgumentException("Invalid view type")
+        }
+    }
+
+    override fun onBindViewHolder(holder: ChecklistViewHolder, position: Int) {
+        holder.bind(getItem(position), onEditClick, onDeleteClick)
+    }
+
+    // FIX 9: DiffCallback (Perbaiki syntax error)
     class DiffCallback : DiffUtil.ItemCallback<Checklist>() {
         override fun areItemsTheSame(oldItem: Checklist, newItem: Checklist): Boolean {
             return oldItem.id == newItem.id
         }
 
+        // FIX: Perbaiki signature agar tidak error 'does not implement abstract base class'
         override fun areContentsTheSame(oldItem: Checklist, newItem: Checklist): Boolean {
             return oldItem == newItem
         }

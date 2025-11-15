@@ -11,20 +11,29 @@ interface ChecklistDao {
     suspend fun insertChecklist(checklist: Checklist)
 
     @Update
-    suspend fun updateChecklist(checklist: Checklist) // <-- Ini sudah ada, bagus!
+    suspend fun updateChecklist(checklist: Checklist)
 
     @Delete
     suspend fun deleteChecklist(checklist: Checklist)
 
-    // Mengambil semua checklist diurutkan berdasarkan tanggal pembuatan (terbaru di atas)
-    @Query("SELECT * FROM Checklist ORDER BY createdDate DESC")
-    fun getAllChecklists(): LiveData<List<Checklist>>
+    // --- MODIFIKASI: Mengambil semua checklist dengan urutan dinamis ---
+    // Query ini menggunakan 'CASE' untuk memilih kolom pengurutan secara dinamis
+    @Query("SELECT * FROM Checklist ORDER BY " +
+            "CASE WHEN :sortByName = 'checklistTitle' AND :isAsc = 1 THEN checklistTitle END ASC, " +
+            "CASE WHEN :sortByName = 'checklistTitle' AND :isAsc = 0 THEN checklistTitle END DESC, " +
+            "CASE WHEN :sortByName = 'createdDate' AND :isAsc = 1 THEN createdDate END ASC, " +
+            "CASE WHEN :sortByName = 'createdDate' AND :isAsc = 0 THEN createdDate END DESC")
+    fun getAllChecklists(isAsc: Boolean, sortByName: String): LiveData<List<Checklist>>
 
-    // Mencari checklist berdasarkan judul
-    @Query("SELECT * FROM Checklist WHERE checklistTitle LIKE :query ORDER BY createdDate DESC")
-    fun searchChecklist(query: String): LiveData<List<Checklist>>
+    // --- MODIFIKASI: Mencari checklist dengan urutan dinamis ---
+    @Query("SELECT * FROM Checklist WHERE checklistTitle LIKE :query ORDER BY " +
+            "CASE WHEN :sortByName = 'checklistTitle' AND :isAsc = 1 THEN checklistTitle END ASC, " +
+            "CASE WHEN :sortByName = 'checklistTitle' AND :isAsc = 0 THEN checklistTitle END DESC, " +
+            "CASE WHEN :sortByName = 'createdDate' AND :isAsc = 1 THEN createdDate END ASC, " +
+            "CASE WHEN :sortByName = 'createdDate' AND :isAsc = 0 THEN createdDate END DESC")
+    fun searchChecklist(query: String, isAsc: Boolean, sortByName: String): LiveData<List<Checklist>>
 
-    // BARU: Fungsi untuk mengambil satu checklist berdasarkan ID-nya
+    // Fungsi ini untuk 'Edit', biarkan saja
     @Query("SELECT * FROM Checklist WHERE id = :checklistId")
     fun getChecklistById(checklistId: String): LiveData<Checklist>
 }

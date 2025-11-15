@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
+// import kotlinx.coroutines.flow.collectLatest // Dihapus karena _checklistStateFlow dihapus
 import kotlinx.coroutines.launch
 
 class TaskRepository(application: Application) {
@@ -31,9 +31,10 @@ class TaskRepository(application: Application) {
     val taskStateFlow: StateFlow<Resource<Flow<List<Task>>>>
         get() = _taskStateFlow
 
-    private val _checklistStateFlow = MutableStateFlow<Resource<Flow<List<Checklist>>>>(Loading())
-    val checklistStateFlow: StateFlow<Resource<Flow<List<Checklist>>>>
-        get() = _checklistStateFlow
+    // DIHAPUS: _checklistStateFlow tidak terpakai, kita gunakan LiveData
+    // private val _checklistStateFlow = MutableStateFlow<Resource<Flow<List<Checklist>>>>(Loading())
+    // val checklistStateFlow: StateFlow<Resource<Flow<List<Checklist>>>>
+    //    get() = _checklistStateFlow
 
     private val _statusLiveData = MutableLiveData<Resource<StatusResult>>()
     val statusLiveData: LiveData<Resource<StatusResult>>
@@ -41,7 +42,7 @@ class TaskRepository(application: Application) {
 
 
     private val _sortByLiveData = MutableLiveData<Pair<String,Boolean>>().apply {
-        postValue(Pair("title",true))
+        postValue(Pair("title",true)) // Default: urutkan berdasarkan judul (A-Z)
     }
     val sortByLiveData: LiveData<Pair<String,Boolean>>
         get() = _sortByLiveData
@@ -52,9 +53,9 @@ class TaskRepository(application: Application) {
     }
 
     // --- FUNGSI UNTUK TASK ---
+    // (Semua fungsi Task Anda sudah benar)
 
     fun getTaskList(isAsc : Boolean, sortByName:String) {
-        // ... (kode tetap sama) ...
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 _taskStateFlow.emit(Loading())
@@ -71,9 +72,7 @@ class TaskRepository(application: Application) {
         }
     }
 
-
     fun insertTask(task: Task) {
-        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
@@ -86,13 +85,11 @@ class TaskRepository(application: Application) {
     }
 
     fun deleteTask(task: Task) {
-        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
                 val result = taskDao.deleteTask(task)
                 handleResult(result, "Deleted Task Successfully", StatusResult.Deleted)
-
             }
         } catch (e: Exception) {
             _statusLiveData.postValue(Error(e.message.toString()))
@@ -100,28 +97,23 @@ class TaskRepository(application: Application) {
     }
 
     fun deleteTaskUsingId(taskId: String) {
-        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
                 val result = taskDao.deleteTaskUsingId(taskId)
                 handleResult(result, "Deleted Task Successfully", StatusResult.Deleted)
-
             }
         } catch (e: Exception) {
             _statusLiveData.postValue(Error(e.message.toString()))
         }
     }
 
-
     fun updateTask(task: Task) {
-        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
                 val result = taskDao.updateTask(task)
                 handleResult(result, "Updated Task Successfully", StatusResult.Updated)
-
             }
         } catch (e: Exception) {
             _statusLiveData.postValue(Error(e.message.toString()))
@@ -129,13 +121,11 @@ class TaskRepository(application: Application) {
     }
 
     fun updateTaskPaticularField(taskId: String, title: String, description: String) {
-        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
                 val result = taskDao.updateTaskPaticularField(taskId, title, description)
                 handleResult(result, "Updated Task Successfully", StatusResult.Updated)
-
             }
         } catch (e: Exception) {
             _statusLiveData.postValue(Error(e.message.toString()))
@@ -143,7 +133,6 @@ class TaskRepository(application: Application) {
     }
 
     fun searchTaskList(query: String) {
-        // ... (kode tetap sama) ...
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 _taskStateFlow.emit(Loading())
@@ -158,7 +147,6 @@ class TaskRepository(application: Application) {
     // --- FUNGSI UNTUK CHECKLIST ---
 
     fun insertChecklist(checklist: Checklist) {
-        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
@@ -171,7 +159,6 @@ class TaskRepository(application: Application) {
     }
 
     fun updateChecklist(checklist: Checklist) {
-        // ... (kode tetap sama) ...
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
@@ -183,13 +170,11 @@ class TaskRepository(application: Application) {
         }
     }
 
-    // BARU: Fungsi untuk Hapus Checklist
     fun deleteChecklist(checklist: Checklist) {
         try {
             _statusLiveData.postValue(Loading())
             CoroutineScope(Dispatchers.IO).launch {
                 checklistDao.deleteChecklist(checklist)
-                // Kita gunakan StatusResult.Deleted
                 handleResult(1, "Deleted Checklist Successfully", StatusResult.Deleted)
             }
         } catch (e: Exception) {
@@ -197,18 +182,21 @@ class TaskRepository(application: Application) {
         }
     }
 
-    fun getAllChecklistsLiveData(): LiveData<List<Checklist>> {
-        // ... (kode tetap sama) ...
-        return checklistDao.getAllChecklists()
+    // --- DIPERBAIKI: Menerima parameter pengurutan ---
+    fun getAllChecklistsLiveData(isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
+        // "Terjemahkan" nama kolom dari ViewModel ('title', 'date')
+        // ke nama kolom di tabel Checklist ('checklistTitle', 'createdDate')
+        val dbSortColumn = if (sortByName == "title") "checklistTitle" else "createdDate"
+        return checklistDao.getAllChecklists(isAsc, dbSortColumn)
     }
 
-    fun searchChecklist(query: String): LiveData<List<Checklist>> {
-        // ... (kode tetap sama) ...
-        return checklistDao.searchChecklist("%${query}%")
+    // --- DIPERBAIKI: Menerima parameter pengurutan ---
+    fun searchChecklist(query: String, isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
+        val dbSortColumn = if (sortByName == "title") "checklistTitle" else "createdDate"
+        return checklistDao.searchChecklist("%${query}%", isAsc, dbSortColumn)
     }
 
     fun getChecklistById(checklistId: String): LiveData<Checklist> {
-        // ... (kode tetap sama) ...
         return checklistDao.getChecklistById(checklistId)
     }
 
@@ -216,7 +204,6 @@ class TaskRepository(application: Application) {
     // --- FUNGSI INTERNAL ---
 
     private fun handleResult(result: Int, message: String, statusResult: StatusResult) {
-        // ... (kode tetap sama) ...
         if (result != -1) {
             _statusLiveData.postValue(Success(message, statusResult))
         } else {
