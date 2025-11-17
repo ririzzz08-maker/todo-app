@@ -1,27 +1,26 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    // if use kapt
-    // add this
-    //id 'kotlin-kapt'
     id 'kotlin-parcelize'
-
-    // but i use ksp
     id 'com.google.devtools.ksp'
     id 'androidx.navigation.safeargs.kotlin'
+
+    // BARU: Terapkan plugin Google Services
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
 }
 
 android {
     namespace 'com.coding.meet.todo_app'
-    compileSdk 34 // DIPERBAIKI: Diubah dari 35 ke 34
+    compileSdk 34 // Disinkronkan dengan AGP 8.2.2
     buildFeatures {
         viewBinding true
     }
 
     defaultConfig {
         applicationId "com.coding.meet.todo_app"
-        minSdk 21
-        targetSdk 34 // DIPERBAIKI: Diubah dari 35 ke 34
+        minSdk 23
+        targetSdk 34 // Disinkronkan dengan AGP 8.2.2
         versionCode 1
         versionName "1.0"
 
@@ -42,46 +41,43 @@ android {
         jvmTarget = '17'
     }
 
-    // buildFeatures { // DIHAPUS: Ini duplikat
-    //     viewBinding true
-    // }
 }
 
 dependencies {
+    // Platform (BOM) Firebase, ini akan mengatur versi. Ini SUDAH BENAR
+    implementation platform('com.google.firebase:firebase-bom:33.1.1')
 
+
+    // 3. Library Firebase UTAMA (TANPA AKHIRAN -ktx)
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-database'
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-crashlytics'
+
+    implementation 'com.cloudinary:cloudinary-android:2.4.0'
+
+    // --- INI SISA BAWAAN PROYEK ANDA ---
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.code.gson:gson:2.10.1'
 
-    // Navigasi (Versi yang benar)
+    // --- SAYA HAPUS DUPLIKAT CRASHLYTICS DARI SINI ---
+    // Baris 'com.google.firebase:firebase-crashlytics:20.0.3' dihapus karena duplikat
+
     def nav_version = "2.7.5"
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
-    // Coil (Untuk Gambar)
     implementation "io.coil-kt:coil:2.5.0"
-
-    // BARU DITAMBAHKAN KEMBALI: Lifecycle (Untuk Transformations & ViewModel)
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.2"
 
     //Lottie
     implementation "com.airbnb.android:lottie:6.1.0"
-
-    // Activity
     implementation 'androidx.activity:activity-ktx:1.8.2'
 
-    // DIHAPUS: Ini duplikat dan versinya salah
-    // implementation 'androidx.navigation:navigation-fragment-ktx:2.9.6'
-    // implementation 'androidx.navigation:navigation-ui-ktx:2.9.6'
-
-    // Room (Database)
-    def room_version = "2.5.2"
-    implementation "androidx.room:room-runtime:$room_version"
-    implementation "androidx.room:room-ktx:$room_version"
-    ksp "androidx.room:room-compiler:$room_version"
+    // Bagus, dependensi Room sudah dihapus
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

@@ -14,10 +14,14 @@
             <item
                 android:id="@+id/nav_tambah_label"
                 android:icon="@drawable/ic_add_circle" android:title="@string/label_tmbhmnu" />
+
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@android:drawable/ic_menu_revert"
+                android:title="Logout" />
+
         </menu>
     </item>
     </group>
-
-
 
 </menu>

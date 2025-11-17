@@ -1,6 +1,7 @@
 package com.coding.meet.todo_app
 
 import android.app.Dialog
+import android.content.Intent // <-- IMPORT TAMBAHAN
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -49,6 +50,9 @@ import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+// --- IMPORT FIREBASE ---
+import com.google.firebase.auth.FirebaseAuth // <-- Ubah import ini
+// --- ----------------- ---
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -58,6 +62,11 @@ import java.util.Date
 import java.util.UUID
 
 class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsListener, ImageSourceBottomSheetFragment.ImageSourceListener {
+
+    // --- VARIABEL FIREBASE AUTH ---
+    private lateinit var auth: FirebaseAuth
+    private var currentUid: String? = null
+    // -----------------------------
 
     // --- (Variabel Dialog tetap sama) ---
     private val addTaskDialog: Dialog by lazy {
@@ -148,7 +157,12 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --- 1. Hubungkan Views Fragment ---
+        // --- 1. SET UP DAN CEK FIREBASE AUTH ---
+        // Ini akan mengecek login. Jika gagal, fungsi lain tidak akan dipanggil.
+        // Jika berhasil, ia akan memanggil fungsi untuk memuat data.
+        setupFirebaseAuth() // <-- Perubahan ada di dalam fungsi ini
+
+        // --- 2. Hubungkan Views Fragment ---
         menuButton = view.findViewById(R.id.menu_button)
         chipContainer = view.findViewById(R.id.chipContainer)
         profileCard = view.findViewById(R.id.profileCard)
@@ -166,19 +180,66 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         tvChecklistHeader = view.findViewById(R.id.tvChecklistHeader)
         tvTaskHeader = view.findViewById(R.id.tvTaskHeader)
 
-        // --- 2. Panggil Setup ---
-        setupDialogs() // Views Add Dialog ditemukan di sini
+        // --- 3. Panggil Setup ---
+        // (Panggilan data dipindahkan ke 'setupFirebaseAuth')
+        setupDialogs()
         setupTaskRecyclerView()
         setupChecklistRecyclerView()
-        setupNavigationDrawer() // Views Update Dialog ditemukan di sini
+        setupNavigationDrawer()
         setupHeaderListeners()
         setupSearch()
+    }
 
-        // --- 3. Panggil Data ---
-        callGetTaskList()
-        observeChecklistData()
-        callSortByLiveData()
-        statusCallback()
+    // ==========================================================
+    // FIREBASE AUTHENTICATION
+    // ==========================================================
+
+    /**
+     * Menginisialisasi Auth dan langsung mengecek status user.
+     */
+    private fun setupFirebaseAuth() {
+        auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser
+
+        if (currentUser == null) {
+            // TIDAK ADA USER, "usir" ke Login
+            Toast.makeText(requireContext(), "Anda harus login...", Toast.LENGTH_LONG).show()
+
+            // Pindah ke LoginActivity
+            val intent = Intent(requireActivity(), LoginActivity2::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            requireActivity().finish() // Tutup activity ini
+        } else {
+            // ADA USER, kita aman.
+            currentUid = currentUser.uid
+            Log.d("TaskListFragment", "User $currentUid terautentikasi. Memuat data...")
+
+            // --- PERUBAHAN 1 DITERAPKAN DI SINI ---
+            // Beri tahu ViewModel siapa yang login. Ini akan memicu Repository
+            // untuk menginisialisasi referensi Firebase.
+            taskViewModel.setFirebaseUser(currentUid!!)
+            // ----------------------------------------
+
+            // Baru kita panggil semua fungsi untuk memuat data
+            callGetTaskList()
+            observeChecklistData()
+            callSortByLiveData()
+            statusCallback()
+        }
+    }
+
+    /**
+     * Fungsi untuk Logout.
+     */
+    private fun logoutUser() {
+        auth.signOut()
+
+        // Kembali ke Login
+        val intent = Intent(requireActivity(), LoginActivity2::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        requireActivity().finish()
     }
 
     // ==========================================================
@@ -235,6 +296,8 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         }
     }
 
+    // --- PERUBAHAN 2 DITERAPKAN DI SINI ---
+    // Fungsi ini diganti total
     private fun callGetTaskList() {
         CoroutineScope(Dispatchers.Main).launch {
             taskViewModel.taskStateFlow.collectLatest { statusResult ->
@@ -242,13 +305,15 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
                     Status.LOADING -> loadingDialog.show()
                     Status.SUCCESS -> {
                         loadingDialog.dismiss()
-                        statusResult.data?.collect { taskList ->
-                            taskRVVBListAdapter.submitList(taskList)
-                            if (taskList.isNotEmpty()) {
-                                tvTaskHeader.visibility = View.VISIBLE
-                            } else {
-                                tvTaskHeader.visibility = View.GONE
-                            }
+
+                        // 'statusResult.data' sekarang adalah 'List<Task>', bukan 'Flow'
+                        val taskList = statusResult.data
+                        taskRVVBListAdapter.submitList(taskList) // Langsung kirim list-nya
+
+                        if (taskList?.isNotEmpty() == true) {
+                            tvTaskHeader.visibility = View.VISIBLE
+                        } else {
+                            tvTaskHeader.visibility = View.GONE
                         }
                     }
                     Status.ERROR -> {
@@ -259,6 +324,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
             }
         }
     }
+    // ----------------------------------------
 
     private fun setupTaskRecyclerView() {
         // Observer untuk Layout Manager
@@ -355,6 +421,12 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
                         Toast.makeText(requireContext(), "Belum ada tugas untuk diedit", Toast.LENGTH_SHORT).show()
                     }
                 }
+                // --- LOGIKA LOGOUT DITAMBAHKAN ---
+                // (Asumsi ID Anda adalah 'nav_logout' di file menu XML)
+                R.id.nav_logout -> {
+                    logoutUser()
+                }
+                // ---------------------------------
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true

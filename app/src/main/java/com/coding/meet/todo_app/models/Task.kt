@@ -1,19 +1,23 @@
 package com.coding.meet.todo_app.models
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+// Hapus import androidx.room...
 import java.util.Date
 
-@Entity()
+// Hapus @Entity
 data class Task(
-    @PrimaryKey(autoGenerate = false)
-    @ColumnInfo(name = "taskId")
-    val id: String,
-    @ColumnInfo(name = "taskTitle")
+    // Hapus @PrimaryKey dan @ColumnInfo
+    var id: String,
+
+    // Hapus @ColumnInfo
     val title: String,
+
     val description: String,
     val date: Date,
-    @ColumnInfo(name = "imagePath")
+
+    // Hapus @ColumnInfo
     val imagePath: String? = null
-)
+) {
+    // TAMBAHKAN INI:
+    // Konstruktor kosong ini WAJIB untuk Firebase
+    constructor() : this("", "", "", Date(), null)
+}

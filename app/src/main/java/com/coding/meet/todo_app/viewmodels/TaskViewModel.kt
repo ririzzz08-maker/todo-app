@@ -3,9 +3,8 @@ package com.coding.meet.todo_app.viewmodels
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData // <-- INI ALTERNATIF BARU KITA
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.room.Query
 import com.coding.meet.todo_app.models.Checklist
 import com.coding.meet.todo_app.models.Task
 import com.coding.meet.todo_app.repository.TaskRepository
@@ -18,11 +17,21 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     val statusLiveData get() =  taskRepository.statusLiveData
     val sortByLiveData get() =  taskRepository.sortByLiveData
 
+    // --- FUNGSI BARU UNTUK FIREBASE ---
+    /**
+     * Inisialisasi Repository dengan UID pengguna yang sedang login.
+     * Ini harus dipanggil dari Fragment setelah Auth berhasil.
+     */
+    fun setFirebaseUser(uid: String) {
+        taskRepository.initUser(uid)
+    }
+    // ------------------------------------
+
     fun setSortBy(sort:Pair<String,Boolean>){
         taskRepository.setSortBy(sort)
     }
 
-    // --- FUNGSI TASK --- (Diabaikan untuk singkatnya)
+    // --- FUNGSI TASK ---
     fun getTaskList(isAsc : Boolean, sortByName:String) { taskRepository.getTaskList(isAsc, sortByName) }
     fun insertTask(task: Task){ taskRepository.insertTask(task) }
     fun deleteTask(task: Task) { taskRepository.deleteTask(task) }
@@ -36,24 +45,25 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     fun updateChecklist(checklist: Checklist) { taskRepository.updateChecklist(checklist) }
     fun deleteChecklist(checklist: Checklist) { taskRepository.deleteChecklist(checklist) }
 
-    // --- ALTERNATIF: MENGGANTI Transformations dengan MediatorLiveData ---
+    // --- (Kode MediatorLiveData Anda sudah bagus dan tetap berfungsi) ---
     val allChecklists: LiveData<List<Checklist>> = MediatorLiveData<List<Checklist>>().apply {
         var currentSource: LiveData<List<Checklist>>? = null
 
         addSource(sortByLiveData) { sortPair ->
             currentSource?.let { removeSource(it) }
 
+            // 'getAllChecklistsLiveData' akan kita modifikasi di Repository
             val newSource = taskRepository.getAllChecklistsLiveData(sortPair.second, sortPair.first)
 
             currentSource = newSource
 
             addSource(newSource) { checklistList ->
-                value = checklistList // Meneruskan nilai dari LiveData baru
+                value = checklistList
             }
         }
     }
 
-    // --- searchChecklist (yang memiliki error yang sama) ---
+    // --- (Fungsi searchChecklist Anda sudah bagus) ---
     fun searchChecklist(query: String, isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
         return taskRepository.searchChecklist(query, isAsc, sortByName)
     }

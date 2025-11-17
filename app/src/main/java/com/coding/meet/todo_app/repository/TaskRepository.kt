@@ -1,10 +1,9 @@
 package com.coding.meet.todo_app.repository
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.room.Query
-import com.coding.meet.todo_app.database.TaskDatabase
 import com.coding.meet.todo_app.models.Checklist
 import com.coding.meet.todo_app.models.Task
 import com.coding.meet.todo_app.utils.Resource
@@ -12,197 +11,344 @@ import com.coding.meet.todo_app.utils.Resource.Error
 import com.coding.meet.todo_app.utils.Resource.Loading
 import com.coding.meet.todo_app.utils.Resource.Success
 import com.coding.meet.todo_app.utils.StatusResult
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+// --- IMPORT FIREBASE ---
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.Query
+import com.google.firebase.database.ValueEventListener
+// ----------------------
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-// import kotlinx.coroutines.flow.collectLatest // Dihapus karena _checklistStateFlow dihapus
-import kotlinx.coroutines.launch
 
 class TaskRepository(application: Application) {
 
-    private val taskDao = TaskDatabase.getInstance(application).taskDao
-    private val checklistDao = TaskDatabase.getInstance(application).checklistDao
+    // --- HAPUS ROOM DAO ---
+    // private val taskDao = TaskDatabase.getInstance(application).taskDao
+    // private val checklistDao = TaskDatabase.getInstance(application).checklistDao
 
+    // --- TAMBAHKAN REFERENSI FIREBASE ---
+    private var taskRef: DatabaseReference? = null
+    private var checklistRef: DatabaseReference? = null
+    private val database = FirebaseDatabase.getInstance()
+    // ---------------------------------
 
-    private val _taskStateFlow = MutableStateFlow<Resource<Flow<List<Task>>>>(Loading())
-    val taskStateFlow: StateFlow<Resource<Flow<List<Task>>>>
+    // --- UBAH TIPE: StateFlow tidak lagi butuh Flow di dalamnya ---
+    private val _taskStateFlow = MutableStateFlow<Resource<List<Task>>>(Loading())
+    val taskStateFlow: StateFlow<Resource<List<Task>>>
         get() = _taskStateFlow
 
-    // DIHAPUS: _checklistStateFlow tidak terpakai, kita gunakan LiveData
-    // private val _checklistStateFlow = MutableStateFlow<Resource<Flow<List<Checklist>>>>(Loading())
-    // val checklistStateFlow: StateFlow<Resource<Flow<List<Checklist>>>>
-    //    get() = _checklistStateFlow
-
+    // (Live data lain tetap sama)
     private val _statusLiveData = MutableLiveData<Resource<StatusResult>>()
     val statusLiveData: LiveData<Resource<StatusResult>>
         get() = _statusLiveData
 
-
     private val _sortByLiveData = MutableLiveData<Pair<String,Boolean>>().apply {
-        postValue(Pair("title",true)) // Default: urutkan berdasarkan judul (A-Z)
+        postValue(Pair("title",true))
     }
     val sortByLiveData: LiveData<Pair<String,Boolean>>
         get() = _sortByLiveData
 
+    /**
+     * FUNGSI BARU: Dipanggil oleh ViewModel untuk inisialisasi
+     */
+    fun initUser(uid: String) {
+        Log.d("TaskRepository", "Inisialisasi user: $uid")
+        // Buat referensi spesifik ke data milik user ini
+        taskRef = database.reference.child("users").child(uid).child("tasks")
+        checklistRef = database.reference.child("users").child(uid).child("checklists")
+    }
 
     fun setSortBy(sort:Pair<String,Boolean>){
         _sortByLiveData.postValue(sort)
     }
 
-    // --- FUNGSI UNTUK TASK ---
-    // (Semua fungsi Task Anda sudah benar)
+    // --- FUNGSI TASK (DITULIS ULANG) ---
 
+    // **INI ADALAH FUNGSI getTaskList YANG SUDAH DIPERBAIKI**
     fun getTaskList(isAsc : Boolean, sortByName:String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                _taskStateFlow.emit(Loading())
-                delay(500)
-                val result = if (sortByName == "title"){
-                    taskDao.getTaskListSortByTaskTitle(isAsc)
-                }else{
-                    taskDao.getTaskListSortByTaskDate(isAsc)
-                }
-                _taskStateFlow.emit(Success("loading", result))
-            } catch (e: Exception) {
-                _taskStateFlow.emit(Error(e.message.toString()))
-            }
+        if (taskRef == null) {
+            _taskStateFlow.value = Error("User not initialized")
+            return
         }
+
+        _taskStateFlow.value = Loading()
+
+        // Tentukan query urutan
+        val dbSortColumn = if (sortByName == "title") "title" else "date"
+        val query = taskRef!!.orderByChild(dbSortColumn)
+
+        // Pasang listener yang akan otomatis meng-update _taskStateFlow
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val taskList = mutableListOf<Task>()
+                for (childSnapshot in snapshot.children) {
+                    try {
+                        val task = childSnapshot.getValue(Task::class.java)
+                        if (task != null) {
+                            task.id = childSnapshot.key ?: task.id
+                            taskList.add(task)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("TaskRepository", "Gagal parse Task: ${e.message}")
+                    }
+                }
+                if (!isAsc) taskList.reverse()
+                // Langsung kirim list-nya
+                _taskStateFlow.value = Success("Loaded", taskList)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                _taskStateFlow.value = Error(error.message)
+            }
+        })
     }
 
+
     fun insertTask(task: Task) {
-        try {
-            _statusLiveData.postValue(Loading())
-            CoroutineScope(Dispatchers.IO).launch {
-                val result = taskDao.insertTask(task)
-                handleResult(result.toInt(), "Inserted Task Successfully", StatusResult.Added)
-            }
-        } catch (e: Exception) {
-            _statusLiveData.postValue(Error(e.message.toString()))
+        if (taskRef == null) {
+            _statusLiveData.postValue(Error("User not initialized"))
+            return
         }
+        _statusLiveData.postValue(Loading())
+
+        // Gunakan ID unik dari Firebase
+        val taskId = taskRef!!.push().key ?: task.id
+        task.id = taskId
+
+        taskRef!!.child(taskId).setValue(task)
+            .addOnSuccessListener {
+                _statusLiveData.postValue(Success("Inserted Task Successfully", StatusResult.Added))
+            }
+            .addOnFailureListener { e ->
+                _statusLiveData.postValue(Error(e.message.toString()))
+            }
     }
 
     fun deleteTask(task: Task) {
-        try {
-            _statusLiveData.postValue(Loading())
-            CoroutineScope(Dispatchers.IO).launch {
-                val result = taskDao.deleteTask(task)
-                handleResult(result, "Deleted Task Successfully", StatusResult.Deleted)
-            }
-        } catch (e: Exception) {
-            _statusLiveData.postValue(Error(e.message.toString()))
-        }
+        deleteTaskUsingId(task.id)
     }
 
     fun deleteTaskUsingId(taskId: String) {
-        try {
-            _statusLiveData.postValue(Loading())
-            CoroutineScope(Dispatchers.IO).launch {
-                val result = taskDao.deleteTaskUsingId(taskId)
-                handleResult(result, "Deleted Task Successfully", StatusResult.Deleted)
-            }
-        } catch (e: Exception) {
-            _statusLiveData.postValue(Error(e.message.toString()))
+        if (taskRef == null) {
+            _statusLiveData.postValue(Error("User not initialized"))
+            return
         }
+        _statusLiveData.postValue(Loading())
+        taskRef!!.child(taskId).removeValue()
+            .addOnSuccessListener {
+                _statusLiveData.postValue(Success("Deleted Task Successfully", StatusResult.Deleted))
+            }
+            .addOnFailureListener { e ->
+                _statusLiveData.postValue(Error(e.message.toString()))
+            }
     }
 
     fun updateTask(task: Task) {
-        try {
-            _statusLiveData.postValue(Loading())
-            CoroutineScope(Dispatchers.IO).launch {
-                val result = taskDao.updateTask(task)
-                handleResult(result, "Updated Task Successfully", StatusResult.Updated)
-            }
-        } catch (e: Exception) {
-            _statusLiveData.postValue(Error(e.message.toString()))
+        if (taskRef == null) {
+            _statusLiveData.postValue(Error("User not initialized"))
+            return
         }
+        _statusLiveData.postValue(Loading())
+        taskRef!!.child(task.id).setValue(task)
+            .addOnSuccessListener {
+                _statusLiveData.postValue(Success("Updated Task Successfully", StatusResult.Updated))
+            }
+            .addOnFailureListener { e ->
+                _statusLiveData.postValue(Error(e.message.toString()))
+            }
     }
 
     fun updateTaskPaticularField(taskId: String, title: String, description: String) {
-        try {
-            _statusLiveData.postValue(Loading())
-            CoroutineScope(Dispatchers.IO).launch {
-                val result = taskDao.updateTaskPaticularField(taskId, title, description)
-                handleResult(result, "Updated Task Successfully", StatusResult.Updated)
-            }
-        } catch (e: Exception) {
-            _statusLiveData.postValue(Error(e.message.toString()))
+        if (taskRef == null) {
+            _statusLiveData.postValue(Error("User not initialized"))
+            return
         }
+        _statusLiveData.postValue(Loading())
+
+        val updates = mapOf(
+            "title" to title,
+            "description" to description
+            // Anda bisa tambahkan "date" jika ingin update timestamp
+        )
+
+        taskRef!!.child(taskId).updateChildren(updates)
+            .addOnSuccessListener {
+                _statusLiveData.postValue(Success("Updated Task Successfully", StatusResult.Updated))
+            }
+            .addOnFailureListener { e ->
+                _statusLiveData.postValue(Error(e.message.toString()))
+            }
     }
 
+    // Fungsi searchTaskList sekarang harus me-query Firebase
     fun searchTaskList(query: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                _taskStateFlow.emit(Loading())
-                val result = taskDao.searchTaskList("%${query}%")
-                _taskStateFlow.emit(Success("loading", result))
-            } catch (e: Exception) {
-                _taskStateFlow.emit(Error(e.message.toString()))
-            }
+        if (taskRef == null) {
+            _taskStateFlow.value = Error("User not initialized")
+            return
         }
+        _taskStateFlow.value = Loading()
+
+        // Query search di Firebase
+        val searchQuery = taskRef!!.orderByChild("title")
+            .startAt(query)
+            .endAt(query + "\uf8ff") // \uf8ff adalah karakter 'wildcard'
+
+        searchQuery.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val taskList = mutableListOf<Task>()
+                for (childSnapshot in snapshot.children) {
+                    val task = childSnapshot.getValue(Task::class.java)
+                    if (task != null) {
+                        task.id = childSnapshot.key ?: task.id
+                        taskList.add(task)
+                    }
+                }
+                // Kirim hasil search (ini tidak live, hanya sekali)
+                _taskStateFlow.value = Success("Search complete", taskList)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                _taskStateFlow.value = Error(error.message)
+            }
+        })
     }
 
-    // --- FUNGSI UNTUK CHECKLIST ---
+    // --- FUNGSI UNTUK CHECKLIST (DITULIS ULANG) ---
 
     fun insertChecklist(checklist: Checklist) {
-        try {
-            _statusLiveData.postValue(Loading())
-            CoroutineScope(Dispatchers.IO).launch {
-                checklistDao.insertChecklist(checklist)
-                handleResult(1, "Inserted Checklist Successfully", StatusResult.Added)
+        if (checklistRef == null) return
+        _statusLiveData.postValue(Loading())
+
+        val checklistId = checklistRef!!.push().key ?: checklist.id
+        checklist.id = checklistId
+
+        checklistRef!!.child(checklistId).setValue(checklist)
+            .addOnSuccessListener {
+                _statusLiveData.postValue(Success("Inserted Checklist Successfully", StatusResult.Added))
             }
-        } catch (e: Exception) {
-            _statusLiveData.postValue(Error(e.message.toString()))
-        }
+            .addOnFailureListener { e -> _statusLiveData.postValue(Error(e.message.toString())) }
     }
 
     fun updateChecklist(checklist: Checklist) {
-        try {
-            _statusLiveData.postValue(Loading())
-            CoroutineScope(Dispatchers.IO).launch {
-                checklistDao.updateChecklist(checklist)
-                handleResult(1, "Updated Checklist Successfully", StatusResult.Updated)
+        if (checklistRef == null) return
+        _statusLiveData.postValue(Loading())
+        checklistRef!!.child(checklist.id).setValue(checklist)
+            .addOnSuccessListener {
+                _statusLiveData.postValue(Success("Updated Checklist Successfully", StatusResult.Updated))
             }
-        } catch (e: Exception) {
-            _statusLiveData.postValue(Error(e.message.toString()))
-        }
+            .addOnFailureListener { e -> _statusLiveData.postValue(Error(e.message.toString())) }
     }
 
     fun deleteChecklist(checklist: Checklist) {
-        try {
-            _statusLiveData.postValue(Loading())
-            CoroutineScope(Dispatchers.IO).launch {
-                checklistDao.deleteChecklist(checklist)
-                handleResult(1, "Deleted Checklist Successfully", StatusResult.Deleted)
+        if (checklistRef == null) return
+        _statusLiveData.postValue(Loading())
+        checklistRef!!.child(checklist.id).removeValue()
+            .addOnSuccessListener {
+                _statusLiveData.postValue(Success("Deleted Checklist Successfully", StatusResult.Deleted))
             }
-        } catch (e: Exception) {
-            _statusLiveData.postValue(Error(e.message.toString()))
+            .addOnFailureListener { e -> _statusLiveData.postValue(Error(e.message.toString())) }
+    }
+
+    // --- (Ini adalah bagian yang diamati oleh MediatorLiveData) ---
+    // Kita akan membuat LiveData kustom yang membersihkan listener-nya
+    fun getAllChecklistsLiveData(isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
+        if (checklistRef == null) return MutableLiveData() // Kembalikan data kosong
+
+        val dbSortColumn = if (sortByName == "title") "checklistTitle" else "createdDate"
+        val query = checklistRef!!.orderByChild(dbSortColumn)
+
+        // LiveData kustom
+        return object : LiveData<List<Checklist>>() {
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val checklistList = mutableListOf<Checklist>()
+                    for (child in snapshot.children) {
+                        try {
+                            val item = child.getValue(Checklist::class.java)
+                            if (item != null) {
+                                item.id = child.key ?: item.id
+                                checklistList.add(item)
+                            }
+                        } catch (e: Exception) { Log.e("TaskRepo", "Gagal parse Checklist") }
+                    }
+                    if (!isAsc) checklistList.reverse()
+                    value = checklistList // Post value ke LiveData
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("TaskRepo", "Checklist listener error: ${error.message}")
+                }
+            }
+
+            // Saat LiveData aktif, pasang listener
+            override fun onActive() {
+                super.onActive()
+                query.addValueEventListener(listener)
+            }
+
+            // Saat LiveData tidak aktif, hapus listener
+            override fun onInactive() {
+                super.onInactive()
+                query.removeEventListener(listener)
+            }
         }
     }
 
-    // --- DIPERBAIKI: Menerima parameter pengurutan ---
-    fun getAllChecklistsLiveData(isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
-        // "Terjemahkan" nama kolom dari ViewModel ('title', 'date')
-        // ke nama kolom di tabel Checklist ('checklistTitle', 'createdDate')
-        val dbSortColumn = if (sortByName == "title") "checklistTitle" else "createdDate"
-        return checklistDao.getAllChecklists(isAsc, dbSortColumn)
-    }
-
-    // --- DIPERBAIKI: Menerima parameter pengurutan ---
+    // --- (Fungsi searchChecklist) ---
     fun searchChecklist(query: String, isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
+        if (checklistRef == null) return MutableLiveData()
+
         val dbSortColumn = if (sortByName == "title") "checklistTitle" else "createdDate"
-        return checklistDao.searchChecklist("%${query}%", isAsc, dbSortColumn)
+        val searchQuery = checklistRef!!.orderByChild(dbSortColumn)
+            .startAt(query)
+            .endAt(query + "\uf8ff")
+
+        // Kita gunakan LiveData kustom lagi
+        return object : LiveData<List<Checklist>>() {
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val list = mutableListOf<Checklist>()
+                    for (child in snapshot.children) {
+                        val item = child.getValue(Checklist::class.java)
+                        if (item != null) {
+                            item.id = child.key ?: item.id
+                            list.add(item)
+                        }
+                    }
+                    if (!isAsc) list.reverse()
+                    value = list
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            }
+            override fun onActive() { searchQuery.addValueEventListener(listener) }
+            override fun onInactive() { searchQuery.removeEventListener(listener) }
+        }
     }
 
+    // --- (Fungsi getChecklistById) ---
     fun getChecklistById(checklistId: String): LiveData<Checklist> {
-        return checklistDao.getChecklistById(checklistId)
-    }
+        if (checklistRef == null) return MutableLiveData()
 
+        val query = checklistRef!!.child(checklistId)
+
+        return object : LiveData<Checklist>() {
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val item = snapshot.getValue(Checklist::class.java)
+                    item?.id = snapshot.key ?: ""
+                    value = item // Post checklist tunggal
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            }
+            override fun onActive() { query.addValueEventListener(listener) }
+            override fun onInactive() { query.removeEventListener(listener) }
+        }
+    }
 
     // --- FUNGSI INTERNAL ---
-
+    // (Fungsi ini tidak lagi kita perlukan karena kita menggunakan addOnSuccessListener)
+    /*
     private fun handleResult(result: Int, message: String, statusResult: StatusResult) {
         if (result != -1) {
             _statusLiveData.postValue(Success(message, statusResult))
@@ -210,4 +356,5 @@ class TaskRepository(application: Application) {
             _statusLiveData.postValue(Error("Something Went Wrong", statusResult))
         }
     }
+    */
 }
