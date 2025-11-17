@@ -56,15 +56,20 @@ class ChecklistMainAdapter(
             val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
             binding.dateTxt.text = dateFormat.format(checklist.createdDate)
 
-            if (checklist.imagePath.isNullOrEmpty()) {
+            // --- PERBAIKAN DI SINI ---
+            // 1. Salin 'imagePath' (var) ke 'val' lokal
+            val imageUrl = checklist.imagePath
+
+            // 2. Gunakan 'val' lokal untuk pengecekan dan pemuatan
+            if (imageUrl.isNullOrEmpty()) {
                 binding.itemImagePreview.visibility = View.GONE
             } else {
                 binding.itemImagePreview.visibility = View.VISIBLE
-                binding.itemImagePreview.load(checklist.imagePath.toUri()) {
+                // 3. 'load' dari Coil bisa langsung memuat URL String, tidak perlu .toUri()
+                binding.itemImagePreview.load(imageUrl) {
                     crossfade(true)
                 }
             }
-
             binding.deleteImg.setOnClickListener { onDeleteClick(checklist) }
             binding.editImg.setOnClickListener { onEditClick(checklist) }
             binding.root.setOnClickListener { onEditClick(checklist) }
@@ -81,17 +86,23 @@ class ChecklistMainAdapter(
         ) {
             binding.titleTxt.text = checklist.title
 
-            val dateFormat = SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault())
+            val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
             binding.dateTxt.text = dateFormat.format(checklist.createdDate)
 
-            // Logika Gambar dan Hapus di Grid
-            if (checklist.imagePath.isNullOrEmpty()) {
+            // --- PERBAIKAN DI SINI ---
+            // 1. Salin 'imagePath' (var) ke 'val' lokal
+            val imageUrl = checklist.imagePath
+
+            // 2. Gunakan 'val' lokal untuk pengecekan dan pemuatan
+            if (imageUrl.isNullOrEmpty()) {
                 binding.itemImagePreview.visibility = View.GONE
             } else {
                 binding.itemImagePreview.visibility = View.VISIBLE
-                binding.itemImagePreview.load(checklist.imagePath.toUri())
+                // 3. 'load' dari Coil bisa langsung memuat URL String, tidak perlu .toUri()
+                binding.itemImagePreview.load(imageUrl) {
+                    crossfade(true)
+                }
             }
-
             binding.deleteImg.setOnClickListener { onDeleteClick(checklist) }
             binding.root.setOnClickListener { onEditClick(checklist) }
         }

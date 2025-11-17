@@ -51,7 +51,11 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 // --- IMPORT FIREBASE ---
-import com.google.firebase.auth.FirebaseAuth // <-- Ubah import ini
+import com.google.firebase.auth.FirebaseAuth // <-- Import non-KTX
+// --- IMPORT CLOUDINARY (BARU) ---
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
 // --- ----------------- ---
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -158,9 +162,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         super.onViewCreated(view, savedInstanceState)
 
         // --- 1. SET UP DAN CEK FIREBASE AUTH ---
-        // Ini akan mengecek login. Jika gagal, fungsi lain tidak akan dipanggil.
-        // Jika berhasil, ia akan memanggil fungsi untuk memuat data.
-        setupFirebaseAuth() // <-- Perubahan ada di dalam fungsi ini
+        setupFirebaseAuth() // <-- Sudah menggunakan FirebaseAuth.getInstance()
 
         // --- 2. Hubungkan Views Fragment ---
         menuButton = view.findViewById(R.id.menu_button)
@@ -181,8 +183,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         tvTaskHeader = view.findViewById(R.id.tvTaskHeader)
 
         // --- 3. Panggil Setup ---
-        // (Panggilan data dipindahkan ke 'setupFirebaseAuth')
-        setupDialogs()
+        setupDialogs() // <-- Perubahan ada di dalam fungsi ini
         setupTaskRecyclerView()
         setupChecklistRecyclerView()
         setupNavigationDrawer()
@@ -198,7 +199,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
      * Menginisialisasi Auth dan langsung mengecek status user.
      */
     private fun setupFirebaseAuth() {
-        auth = FirebaseAuth.getInstance()
+        auth = FirebaseAuth.getInstance() // <-- Sudah benar
         val currentUser = auth.currentUser
 
         if (currentUser == null) {
@@ -216,9 +217,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
             Log.d("TaskListFragment", "User $currentUid terautentikasi. Memuat data...")
 
             // --- PERUBAHAN 1 DITERAPKAN DI SINI ---
-            // Beri tahu ViewModel siapa yang login. Ini akan memicu Repository
-            // untuk menginisialisasi referensi Firebase.
-            taskViewModel.setFirebaseUser(currentUid!!)
+            taskViewModel.setFirebaseUser(currentUid!!) // <-- Sudah benar
             // ----------------------------------------
 
             // Baru kita panggil semua fungsi untuk memuat data
@@ -297,7 +296,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     // --- PERUBAHAN 2 DITERAPKAN DI SINI ---
-    // Fungsi ini diganti total
+    // (Fungsi ini sudah benar)
     private fun callGetTaskList() {
         CoroutineScope(Dispatchers.Main).launch {
             taskViewModel.taskStateFlow.collectLatest { statusResult ->
@@ -306,7 +305,6 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
                     Status.SUCCESS -> {
                         loadingDialog.dismiss()
 
-                        // 'statusResult.data' sekarang adalah 'List<Task>', bukan 'Flow'
                         val taskList = statusResult.data
                         taskRVVBListAdapter.submitList(taskList) // Langsung kirim list-nya
 
@@ -327,6 +325,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     // ----------------------------------------
 
     private fun setupTaskRecyclerView() {
+        // ... (Kode Anda, sudah benar) ...
         // Observer untuk Layout Manager
         isListMutableLiveData.observe(viewLifecycleOwner) {
             if (it) {
@@ -378,6 +377,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun setupNavigationDrawer() {
+        // ... (Kode Anda, sudah benar) ...
         // Views untuk update dialog (ditemukan lokal di sini)
         val updateETTitle = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskTitle)
         val updateETTitleL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
@@ -422,7 +422,6 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
                     }
                 }
                 // --- LOGIKA LOGOUT DITAMBAHKAN ---
-                // (Asumsi ID Anda adalah 'nav_logout' di file menu XML)
                 R.id.nav_logout -> {
                     logoutUser()
                 }
@@ -434,6 +433,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun setupHeaderListeners() {
+        // ... (Kode Anda, sudah benar) ...
         chipContainer.setOnClickListener { Toast.makeText(requireContext(), "Chip Container Diklik", Toast.LENGTH_SHORT).show() }
         profileCard.setOnClickListener { findNavController().navigate(R.id.profileFragment) }
 
@@ -463,6 +463,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         }
     }
 
+    // --- FUNGSI INI DIMODIFIKASI TOTAL ---
     private fun setupDialogs() {
         // Views Add Dialog diinisialisasi secara lokal di sini
         val addCloseImg = addTaskDialog.findViewById<ImageView>(R.id.closeImg)
@@ -472,7 +473,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         val dialogAddETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL )
 
         ivRemoveImage = addTaskDialog.findViewById(R.id.ivRemoveImage)
-        ivTaskImage = addTaskDialog.findViewById(R.id.ivTaskImage)
+        ivTaskImage = addTaskDialog.findViewById<ImageView>(R.id.ivTaskImage) // Pastikan ini di-cast
         btnPickImage = addTaskDialog.findViewById(R.id.btnPickImage)
 
         addCloseImg.setOnClickListener { addTaskDialog.dismiss() }
@@ -508,25 +509,105 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
             imageSourceBottomSheet.show(parentFragmentManager, ImageSourceBottomSheetFragment.TAG)
         }
 
+        // --- INI BAGIAN YANG DIUBAH ---
         val saveTaskBtn = addTaskDialog.findViewById<Button>(R.id.saveBtn)
         saveTaskBtn.setOnClickListener {
-            if (validateEditText(dialogAddETTitle, dialogAddETTitleL) && validateEditText(dialogAddETDesc, dialogAddETDescL)) {
-                val newTask = Task(
-                    UUID.randomUUID().toString(),
-                    dialogAddETTitle.text.toString().trim(),
-                    dialogAddETDesc.text.toString().trim(),
-                    Date(),
-                    imageUri?.toString()
-                )
-                imageUri = null
-                requireContext().hideKeyBoard(it)
-                addTaskDialog.dismiss()
-                taskViewModel.insertTask(newTask)
-            }
+            // Kita tidak lagi menyimpan di sini.
+            // Kita panggil fungsi baru yang lebih rapi.
+            handleSaveTask() // Panggil "otak" baru
+        }
+        // --- SELESAI PERUBAHAN ---
+    }
+
+    // --- TAMBAHKAN DUA FUNGSI BARU DI BAWAH INI ---
+
+    /**
+     * FUNGSI BARU 1: Menangani logika validasi dan upload
+     */
+    private fun handleSaveTask() {
+        // Ambil lagi views dari dialog
+        val dialogAddETTitle = addTaskDialog.findViewById<TextInputEditText>(R.id.addETTitle)
+        val dialogAddETTitleL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
+        val dialogAddETDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
+        val dialogAddETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL )
+
+        // 1. Validasi Input
+        if (!validateEditText(dialogAddETTitle, dialogAddETTitleL) || !validateEditText(dialogAddETDesc, dialogAddETDescL)) {
+            Toast.makeText(requireContext(), "Judul dan Deskripsi tidak boleh kosong", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val title = dialogAddETTitle.text.toString().trim()
+        val description = dialogAddETDesc.text.toString().trim()
+
+        // 2. Cek apakah ada gambar yang dipilih
+        if (imageUri != null) {
+            // JIKA ADA GAMBAR: Upload dulu ke Cloudinary
+            loadingDialog.show()
+
+            MediaManager.get().upload(imageUri)
+                .callback(object : UploadCallback {
+                    override fun onStart(requestId: String?) {}
+
+                    override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
+
+                    override fun onSuccess(requestId: String?, resultData: MutableMap<Any?, Any?>?) {
+                        loadingDialog.dismiss()
+
+                        // Ambil URL aman (HTTPS) dari hasil upload
+                        val imageUrl = resultData?.get("secure_url") as? String
+
+                        // Panggil fungsi simpan ke database dengan URL gambar
+                        saveTaskToDatabase(title, description, imageUrl)
+                    }
+
+                    override fun onError(requestId: String?, error: ErrorInfo?) {
+                        loadingDialog.dismiss()
+                        Toast.makeText(requireContext(), "Upload gambar gagal: ${error?.description}", Toast.LENGTH_LONG).show()
+                    }
+
+                    override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
+                })
+                .dispatch() // <-- Panggil ini untuk memulai upload
+
+        } else {
+            // JIKA TIDAK ADA GAMBAR: Langsung simpan
+            saveTaskToDatabase(title, description, null)
         }
     }
 
+    /**
+     * FUNGSI BARU 2: Menyimpan data Task ke ViewModel (Firebase)
+     */
+    private fun saveTaskToDatabase(title: String, description: String, imageUrl: String?) {
+        val newTask = Task(
+            UUID.randomUUID().toString(), // ID ini akan diganti oleh Firebase di Repository
+            title,
+            description,
+            Date(),
+            imageUrl // <-- Simpan URL online (HTTPS)
+        )
+
+        // Reset imageUri global
+        imageUri = null
+
+        // Sembunyikan keyboard, tutup dialog, dan kirim ke ViewModel
+        try {
+            view?.let { requireContext().hideKeyBoard(it) }
+        } catch (e: Exception) {
+            Log.e("TaskListFragment", "Gagal hide keyboard", e)
+        }
+
+        addTaskDialog.dismiss()
+        taskViewModel.insertTask(newTask)
+
+        Toast.makeText(requireContext(), "Catatan disimpan!", Toast.LENGTH_SHORT).show()
+    }
+
+    // --- SISA KODE (SEMUANYA SUDAH BENAR, TIDAK PERLU DIUBAH) ---
+
     private fun showSortBottomSheet() {
+        // ... (kode Anda)
         try {
             val bottomSheet = SortBottomSheetFragment()
             bottomSheet.setOnSortSelectedListener { sortType ->
@@ -539,6 +620,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun applySorting(sortType: String) {
+        // ... (kode Anda)
         when (sortType) {
             "custom" -> {
                 taskViewModel.setSortBy(Pair("title", true))
@@ -553,11 +635,13 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun restoreDeletedTask(deletedTask: Task) {
+        // ... (kode Anda)
         Snackbar.make(requireView(), "Deleted '${deletedTask.title}'", Snackbar.LENGTH_LONG)
             .setAction("Undo") { taskViewModel.insertTask(deletedTask) }.show()
     }
 
     private fun setupSearch() {
+        // ... (kode Anda)
         edSearchEdit.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
@@ -589,6 +673,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun observeChecklistDataAfterSearch() {
+        // ... (kode Anda)
         checklistObserver?.observe(viewLifecycleOwner) { listChecklist ->
             checklistMainAdapter.submitList(listChecklist)
             if (listChecklist.isNullOrEmpty()) {
@@ -602,12 +687,14 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun callSortByLiveData() {
+        // ... (kode Anda)
         taskViewModel.sortByLiveData.observe(viewLifecycleOwner) {
             taskViewModel.getTaskList(it.second, it.first)
         }
     }
 
     private fun statusCallback() {
+        // ... (kode Anda)
         taskViewModel.statusLiveData.observe(viewLifecycleOwner) { statusResponse ->
             when (statusResponse.status) {
                 Status.LOADING -> loadingDialog.show()
@@ -630,6 +717,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun startCamera() {
+        // ... (kode Anda)
         val photosDir = File(requireContext().externalCacheDir, "photos")
         if (!photosDir.exists()) photosDir.mkdirs()
         val newPhotoFile = File(photosDir, "${System.currentTimeMillis()}.jpg")
@@ -638,6 +726,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     override fun onOptionSelected(option: String) {
+        // ... (kode Anda)
         when (option) {
             "list" -> {
                 findNavController().navigate(R.id.action_taskListFragment_to_editChecklistFragment)
@@ -675,6 +764,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     override fun onSourceSelected(source: String) {
+        // ... (kode Anda)
         when (source) {
             ImageSourceBottomSheetFragment.SOURCE_CAMERA -> requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
             ImageSourceBottomSheetFragment.SOURCE_GALLERY -> pickImageLauncher.launch("image/*")

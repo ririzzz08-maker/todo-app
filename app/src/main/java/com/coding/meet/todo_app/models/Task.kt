@@ -15,7 +15,7 @@ data class Task(
     val date: Date,
 
     // Hapus @ColumnInfo
-    val imagePath: String? = null
+    var imagePath: String? = null
 ) {
     // TAMBAHKAN INI:
     // Konstruktor kosong ini WAJIB untuk Firebase

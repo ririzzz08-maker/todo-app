@@ -16,7 +16,7 @@ data class Checklist(
     val createdDate: Date,
 
     // Hapus @ColumnInfo
-    val imagePath: String?,
+    var imagePath: String?,
 
     // Hapus @ColumnInfo
     // Kabar baik: Firebase bisa menyimpan List<ChecklistItem> secara langsung!

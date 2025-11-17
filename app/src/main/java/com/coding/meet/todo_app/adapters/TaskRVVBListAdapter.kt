@@ -30,16 +30,19 @@ class TaskRVVBListAdapter(
             val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
             binding.dateTxt.text = dateFormat.format(task.date)
 
+// --- PERBAIKAN DI SINI ---
+            // 1. Salin 'imagePath' (var) ke 'val' lokal
+            val imageUrl = task.imagePath
 
-            // 4. BARU: Logika untuk menampilkan gambar
-            if (task.imagePath.isNullOrEmpty()) {
+            // 2. Gunakan 'val' lokal untuk pengecekan dan pemuatan
+            if (imageUrl.isNullOrEmpty()) {
                 // Sembunyikan jika TIDAK ADA gambar
                 binding.itemImagePreview.visibility = View.GONE
             } else {
                 // Tampilkan jika ADA gambar
                 binding.itemImagePreview.visibility = View.VISIBLE
-                // Muat gambar menggunakan Coil
-                binding.itemImagePreview.load(task.imagePath.toUri()) {
+                // Muat gambar menggunakan Coil (langsung dari URL String)
+                binding.itemImagePreview.load(imageUrl) {
                     crossfade(true) // Efek fade-in
                     // placeholder(R.drawable.ic_placeholder) // Opsional
                 }
