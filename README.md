@@ -17,16 +17,6 @@ Ini adalah proyek Ujian Akhir Semester (UAS) untuk mata kuliah **Pemrograman Mob
 * **Dosen Pengampu:** Rizky Basatha, S.Pd., M.MT
 
 ---
-
-## Tampilan Aplikasi (Setelah Modifikasi)
-
-Bagian ini menunjukkan antarmuka pengguna (UI) baru setelah dimodifikasi dari desain awal.
-
-| Tampilan Login | Tampilan Utama (Mode Gelap) | Tampilan Tambah Tugas (dengan Gambar) |
-| :---: | :---: | :---: |
-| ![Tampilan Login](link-ke-screenshot-login.png) | ![Tampilan Utama Baru](link-ke-screenshot-home-baru.png) | ![Tampilan Tambah Tugas](link-ke-screenshot-tambah-tugas.png) |
-
-
 ## Fitur Proyek
 
 Proyek ini memodifikasi aplikasi dasar dengan menambahkan beberapa fungsionalitas utama.
