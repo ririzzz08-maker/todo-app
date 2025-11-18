@@ -1,22 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Base.Theme.TodoApp" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Base.Theme.TodoApp" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:fontFamily">@font/app_font</item>
         <item name="android:statusBarColor">@color/black</item>
 
-        <item name="backgroundColor">#598a75</item>
+        <item name="backgroundColor">#2D3C3A</item>
         <item name="textColor">@color/black</item>
-        <item name="hintColor">#757575</item>
+        <item name="hintColor">@color/black</item>
         <item name="cardColor">#f5f5dc</item>
-    </style>
-    <style name="MyHintStyle" parent="TextAppearance.AppCompat.Caption">">
-        <item name="fontFamily">@font/app_font</item>
-        <item name="android:fontFamily">@font/app_font</item>
 
-        <item name="android:textSize">14sp</item>
+        <item name="android:windowBackground">?attr/backgroundColor</item>
+        <item name="android:colorBackground">?attr/backgroundColor</item>
+
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.App</item>
     </style>
 
     <style name="Theme.TodoApp" parent="Base.Theme.TodoApp" />
+
+    <style name="ShapeAppearanceOverlay.App" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">0dp</item>
+    </style>
+    <style name="ShapeAppearanceOverlay.App.CornerSize50Percent" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
 
     <style name="CardViewStyle" parent="Widget.Material3.CardView.Filled">
         <item name="shapeAppearanceOverlay">@style/CutShape</item>
@@ -28,21 +35,21 @@
     <style name="Widget.App.TextInputLayout" parent="Widget.Material3.TextInputLayout.FilledBox">
         <item name="shapeAppearance">@style/CutShape</item>
         <item name="hintTextColor">@color/black</item>
-        <item name="boxStrokeColor">@color/black</item>
+        <item name="boxStrokeColor">@color/white</item>
         <item name="endIconMode">clear_text</item>
         <item name="errorIconDrawable">@null</item>
         <item name="errorEnabled">true</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:textCursorDrawable">@color/black</item>
-        <item name="startIconTint">@color/black</item>
+        <item name="android:textCursorDrawable">@color/white</item>
+        <item name="startIconTint">@color/white</item>
     </style>
     <style name="SearchInputLayout" parent="">
         <item name="endIconMode">clear_text</item>
         <item name="errorIconDrawable">@null</item>
         <item name="errorEnabled">true</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:textCursorDrawable">@color/black</item>
-        <item name="startIconTint">@color/black</item>
+        <item name="android:textCursorDrawable">@color/white</item>
+        <item name="startIconTint">@color/white</item>
     </style>
     <style name="Widget.App.Button.Fill" parent="Widget.Material3.Button">
         <item name="shapeAppearance">@style/CutShape</item>

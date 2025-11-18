@@ -34,6 +34,8 @@ class TaskRepository(application: Application) {
     private var taskRef: DatabaseReference? = null
     private var checklistRef: DatabaseReference? = null
     private val database = FirebaseDatabase.getInstance()
+    private var currentTaskListener: ValueEventListener? = null
+    private var currentTaskQuery: Query? = null
     // ---------------------------------
 
     // --- UBAH TIPE: StateFlow tidak lagi butuh Flow di dalamnya ---
@@ -69,6 +71,8 @@ class TaskRepository(application: Application) {
     // --- FUNGSI TASK (DITULIS ULANG) ---
 
     // **INI ADALAH FUNGSI getTaskList YANG SUDAH DIPERBAIKI**
+    // GANTI FUNGSI LAMA ANDA DENGAN YANG INI
+
     fun getTaskList(isAsc : Boolean, sortByName:String) {
         if (taskRef == null) {
             _taskStateFlow.value = Error("User not initialized")
@@ -77,12 +81,19 @@ class TaskRepository(application: Application) {
 
         _taskStateFlow.value = Loading()
 
-        // Tentukan query urutan
         val dbSortColumn = if (sortByName == "title") "title" else "date"
         val query = taskRef!!.orderByChild(dbSortColumn)
 
-        // Pasang listener yang akan otomatis meng-update _taskStateFlow
-        query.addValueEventListener(object : ValueEventListener {
+        // --- MODIFIKASI DIMULAI ---
+        // Hapus listener lama jika ada, sebelum memasang yang baru
+        if (currentTaskListener != null && currentTaskQuery != null) {
+            currentTaskQuery!!.removeEventListener(currentTaskListener!!)
+        }
+
+        currentTaskQuery = query // Simpan query yang sedang aktif
+
+        // Buat dan simpan listener yang baru
+        currentTaskListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val taskList = mutableListOf<Task>()
                 for (childSnapshot in snapshot.children) {
@@ -97,13 +108,16 @@ class TaskRepository(application: Application) {
                     }
                 }
                 if (!isAsc) taskList.reverse()
-                // Langsung kirim list-nya
                 _taskStateFlow.value = Success("Loaded", taskList)
             }
             override fun onCancelled(error: DatabaseError) {
                 _taskStateFlow.value = Error(error.message)
             }
-        })
+        }
+
+        // Pasang listener yang baru
+        query.addValueEventListener(currentTaskListener!!)
+        // --- MODIFIKASI SELESAI ---
     }
 
 
@@ -189,12 +203,30 @@ class TaskRepository(application: Application) {
             _taskStateFlow.value = Error("User not initialized")
             return
         }
+
+        // --- MODIFIKASI DIMULAI ---
+        // 1. Matikan listener "get all" yang sedang aktif
+        if (currentTaskListener != null && currentTaskQuery != null) {
+            currentTaskQuery!!.removeEventListener(currentTaskListener!!)
+            currentTaskListener = null
+            currentTaskQuery = null
+        }
+
+        // 2. Cek apakah query sekarang kosong (pencarian dihapus)
+        if (query.isEmpty()) {
+            // Jika kosong, hidupkan lagi listener "get all"
+            val sortPair = _sortByLiveData.value ?: Pair("title", true)
+            getTaskList(sortPair.second, sortPair.first)
+            return // Selesai
+        }
+        // --- MODIFIKASI SELESAI ---
+
+        // 3. Jika query TIDAK kosong, jalankan pencarian satu kali
         _taskStateFlow.value = Loading()
 
-        // Query search di Firebase
         val searchQuery = taskRef!!.orderByChild("title")
             .startAt(query)
-            .endAt(query + "\uf8ff") // \uf8ff adalah karakter 'wildcard'
+            .endAt(query + "\uf8ff")
 
         searchQuery.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -206,7 +238,7 @@ class TaskRepository(application: Application) {
                         taskList.add(task)
                     }
                 }
-                // Kirim hasil search (ini tidak live, hanya sekali)
+                // Kirim hasil search
                 _taskStateFlow.value = Success("Search complete", taskList)
             }
             override fun onCancelled(error: DatabaseError) {
@@ -256,7 +288,7 @@ class TaskRepository(application: Application) {
     fun getAllChecklistsLiveData(isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
         if (checklistRef == null) return MutableLiveData() // Kembalikan data kosong
 
-        val dbSortColumn = if (sortByName == "title") "checklistTitle" else "createdDate"
+        val dbSortColumn = if (sortByName == "title") "Title" else "createdDate"
         val query = checklistRef!!.orderByChild(dbSortColumn)
 
         // LiveData kustom
@@ -299,10 +331,13 @@ class TaskRepository(application: Application) {
     fun searchChecklist(query: String, isAsc: Boolean, sortByName: String): LiveData<List<Checklist>> {
         if (checklistRef == null) return MutableLiveData()
 
-        val dbSortColumn = if (sortByName == "title") "checklistTitle" else "createdDate"
-        val searchQuery = checklistRef!!.orderByChild(dbSortColumn)
+        // --- PERBAIKAN ---
+        // Query pencarian HARUS SELALU berdasarkan "title".
+        // Kita tidak bisa menggunakan dbSortColumn di sini.
+        val searchQuery = checklistRef!!.orderByChild("title")
             .startAt(query)
             .endAt(query + "\uf8ff")
+        // --- AKHIR PERBAIKAN ---
 
         // Kita gunakan LiveData kustom lagi
         return object : LiveData<List<Checklist>>() {
@@ -316,7 +351,9 @@ class TaskRepository(application: Application) {
                             list.add(item)
                         }
                     }
-                    if (!isAsc) list.reverse()
+                    // Kita tidak bisa mengurutkan di sini karena query Firebase
+                    // sudah mengurutkan berdasarkan 'title'.
+                    // if (!isAsc) list.reverse() // (Hapus pengurutan 'isAsc' saat mencari)
                     value = list
                 }
                 override fun onCancelled(error: DatabaseError) {}

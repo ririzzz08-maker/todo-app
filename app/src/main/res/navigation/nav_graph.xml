@@ -7,15 +7,19 @@
 
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.coding.meet.todo_app.ProfileFragment"
-        android:label="fragment_profile"
-        tools:layout="@layout/fragment_profile" />
+        android:name="com.coding.meet.todo_app.ProfileFragment" tools:layout="@layout/fragment_profile"
+        android:label="Profile">
+        <action
+            android:id="@+id/action_profileFragment_to_loginActivity2"
+            app:destination="@id/loginActivity2"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/taskListFragment"
-        android:name="com.coding.meet.todo_app.TaskListFragment"
-        android:label="fragment_task_list"
-        tools:layout="@layout/fragment_task_list" >
+        android:name="com.coding.meet.todo_app.TaskListFragment" tools:layout="@layout/fragment_task_list"
+        android:label="Task List">
 
         <action
             android:id="@+id/action_taskListFragment_to_addChecklistFragment"
@@ -23,29 +27,20 @@
 
         <action
             android:id="@+id/action_taskListFragment_to_editChecklistFragment"
-            app:destination="@id/addChecklistFragment">
-
-            <argument
-                android:name="checklist_id"
-                app:argType="string"
-                app:nullable="true"
-                android:defaultValue="@null" />
-        </action>
+            app:destination="@id/addChecklistFragment" />
 
     </fragment>
 
     <fragment
         android:id="@+id/addChecklistFragment"
-        android:name="com.coding.meet.todo_app.AddChecklistFragment"
-        android:label="fragment_add_checklist"
-        tools:layout="@layout/fragment_add_checklist" >
-
-        <argument
-            android:name="checklist_id"
-            app:argType="string"
-            app:nullable="true"
-            android:defaultValue="@null" />
+        android:name="com.coding.meet.todo_app.AddChecklistFragment" tools:layout="@layout/fragment_add_checklist"
+        android:label="Add Checklist">
 
     </fragment>
+
+    <activity
+        android:id="@+id/loginActivity2"
+        android:name="com.coding.meet.todo_app.LoginActivity2" tools:layout="@layout/activity_login2"
+        android:label="Login" />
 
 </navigation>

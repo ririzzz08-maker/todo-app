@@ -8,7 +8,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.coding.meet.todo_app.databinding.ViewTaskListLayoutBinding // Sesuaikan nama binding ini jika beda
+// --- KITA KEMBALIKAN KE BINDING ANDA ---
+import com.coding.meet.todo_app.databinding.ViewTaskListLayoutBinding
 import com.coding.meet.todo_app.models.Task
 import coil.load // BARU: Import Coil yang benar
 import java.text.SimpleDateFormat
@@ -19,6 +20,7 @@ class TaskRVVBListAdapter(
     private val onItemClick: (String, Int, Task) -> Unit
 ) : ListAdapter<Task, TaskRVVBListAdapter.TaskViewHolder>(DiffCallback()) {
 
+    // --- Gunakan ViewTaskListLayoutBinding ---
     inner class TaskViewHolder(private val binding: ViewTaskListLayoutBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
@@ -27,34 +29,32 @@ class TaskRVVBListAdapter(
             binding.titleTxt.text = task.title
 
             // 2. Set Tanggal
-            val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
+            // ... di dalam fun bind(task: Task) ...
+            val dateFormat = SimpleDateFormat("dd MMM yyyy\nHH:mm a", Locale.getDefault())
             binding.dateTxt.text = dateFormat.format(task.date)
 
-// --- PERBAIKAN DI SINI ---
-            // 1. Salin 'imagePath' (var) ke 'val' lokal
+            // 3. Logika Gambar (Kode Anda sudah benar)
             val imageUrl = task.imagePath
-
-            // 2. Gunakan 'val' lokal untuk pengecekan dan pemuatan
             if (imageUrl.isNullOrEmpty()) {
-                // Sembunyikan jika TIDAK ADA gambar
                 binding.itemImagePreview.visibility = View.GONE
             } else {
-                // Tampilkan jika ADA gambar
                 binding.itemImagePreview.visibility = View.VISIBLE
-                // Muat gambar menggunakan Coil (langsung dari URL String)
                 binding.itemImagePreview.load(imageUrl) {
-                    crossfade(true) // Efek fade-in
-                    // placeholder(R.drawable.ic_placeholder) // Opsional
+                    crossfade(true)
                 }
             }
 
-            // 5. Handle Klik (Logika Anda yang sudah ada)
-            binding.editImg.setOnClickListener {
-                onItemClick("update", adapterPosition, task)
-            }
+            // --- PERUBAHAN 4: Atur Ulang Klik Listener ---
+
+            // Hapus listener 'editImg' karena ikonnya akan kita hapus dari XML
+            // binding.editImg.setOnClickListener { ... }
+
+            // Listener untuk Hapus (Tetap)
             binding.deleteImg.setOnClickListener {
                 onItemClick("delete", adapterPosition, task)
             }
+
+            // Listener untuk Edit (Sekarang di seluruh kartu)
             binding.root.setOnClickListener {
                 onItemClick("update", adapterPosition, task)
             }
@@ -62,6 +62,7 @@ class TaskRVVBListAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
+        // --- Inflate layout yang benar ---
         val binding = ViewTaskListLayoutBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,

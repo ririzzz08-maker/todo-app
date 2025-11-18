@@ -56,23 +56,25 @@ class ChecklistMainAdapter(
             val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
             binding.dateTxt.text = dateFormat.format(checklist.createdDate)
 
-            // --- PERBAIKAN DI SINI ---
-            // 1. Salin 'imagePath' (var) ke 'val' lokal
             val imageUrl = checklist.imagePath
-
-            // 2. Gunakan 'val' lokal untuk pengecekan dan pemuatan
             if (imageUrl.isNullOrEmpty()) {
                 binding.itemImagePreview.visibility = View.GONE
             } else {
                 binding.itemImagePreview.visibility = View.VISIBLE
-                // 3. 'load' dari Coil bisa langsung memuat URL String, tidak perlu .toUri()
                 binding.itemImagePreview.load(imageUrl) {
                     crossfade(true)
                 }
             }
+
+            // --- PERBAIKAN DI SINI ---
             binding.deleteImg.setOnClickListener { onDeleteClick(checklist) }
-            binding.editImg.setOnClickListener { onEditClick(checklist) }
+
+            // HAPUS BARIS INI (karena editImg sudah tidak ada di XML)
+            // binding.editImg.setOnClickListener { onEditClick(checklist) }
+
+            // BIARKAN BARIS INI (Ini adalah klik di seluruh kartu)
             binding.root.setOnClickListener { onEditClick(checklist) }
+            // --- SELESAI PERBAIKAN ---
         }
     }
 
@@ -89,16 +91,11 @@ class ChecklistMainAdapter(
             val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
             binding.dateTxt.text = dateFormat.format(checklist.createdDate)
 
-            // --- PERBAIKAN DI SINI ---
-            // 1. Salin 'imagePath' (var) ke 'val' lokal
             val imageUrl = checklist.imagePath
-
-            // 2. Gunakan 'val' lokal untuk pengecekan dan pemuatan
             if (imageUrl.isNullOrEmpty()) {
                 binding.itemImagePreview.visibility = View.GONE
             } else {
                 binding.itemImagePreview.visibility = View.VISIBLE
-                // 3. 'load' dari Coil bisa langsung memuat URL String, tidak perlu .toUri()
                 binding.itemImagePreview.load(imageUrl) {
                     crossfade(true)
                 }
@@ -130,13 +127,11 @@ class ChecklistMainAdapter(
         holder.bind(getItem(position), onEditClick, onDeleteClick)
     }
 
-    // FIX 9: DiffCallback (Perbaiki syntax error)
     class DiffCallback : DiffUtil.ItemCallback<Checklist>() {
         override fun areItemsTheSame(oldItem: Checklist, newItem: Checklist): Boolean {
             return oldItem.id == newItem.id
         }
 
-        // FIX: Perbaiki signature agar tidak error 'does not implement abstract base class'
         override fun areContentsTheSame(oldItem: Checklist, newItem: Checklist): Boolean {
             return oldItem == newItem
         }

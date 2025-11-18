@@ -60,7 +60,7 @@ class RegisterActivity : AppCompatActivity() {
 
         // 1. Validasi input (pastikan tidak kosong)
         if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            Toast.makeText(this, "Semua field tidak boleh kosong", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Isi Email dan Password!", Toast.LENGTH_SHORT).show()
             return
         }
 

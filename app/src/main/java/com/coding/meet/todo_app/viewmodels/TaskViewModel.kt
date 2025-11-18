@@ -71,4 +71,31 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     fun getChecklistById(checklistId: String): LiveData<Checklist> {
         return taskRepository.getChecklistById(checklistId)
     }
+    fun getTaskByIdFromNavMenu(taskId: String): Task? {
+        return taskStateFlow.value.data?.firstOrNull { it.id == taskId }
+    }
+
+    private val _taskToEdit = MutableLiveData<Task?>()
+    val taskToEdit: LiveData<Task?> = _taskToEdit
+
+    /**
+     * Dipanggil oleh MainActivity saat item di nav drawer diklik
+     */
+    fun selectTaskForEdit(task: Task) {
+        _taskToEdit.value = task
+    }
+
+    /**
+     * Dipanggil oleh TaskListFragment setelah dialog ditampilkan
+     */
+    fun doneEditingTask() {
+        _taskToEdit.value = null
+    }
+    private val _checklistToEdit = MutableLiveData<Checklist?>()
+    val checklistToEdit: LiveData<Checklist?> = _checklistToEdit
+
+    fun selectChecklistForEdit(checklist: Checklist) { _checklistToEdit.value = checklist }
+    fun doneEditingChecklist() { _checklistToEdit.value = null }
+
+    
 }

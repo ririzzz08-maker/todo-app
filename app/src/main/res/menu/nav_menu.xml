@@ -3,25 +3,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
+    <group android:id="@+id/group_header" android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_header_dynamic"
+            android:title="CATATAN/CHECKLIST"
+            android:enabled="false" />
+    </group>
+
     <group
-        android:id="@+id/group_labels"
-        android:checkableBehavior="single"> <item android:title="@string/label_lblmnu">
-        <menu>
-            <item
-                android:id="@+id/nav_tugas"
-                android:icon="@drawable/square" android:title="@string/label_lblmnu" />
+        android:id="@+id/group_dynamic_checklists"
+        android:checkableBehavior="single">
+    </group>
 
-            <item
-                android:id="@+id/nav_tambah_label"
-                android:icon="@drawable/ic_add_circle" android:title="@string/label_tmbhmnu" />
-
-            <item
-                android:id="@+id/nav_logout"
-                android:icon="@android:drawable/ic_menu_revert"
-                android:title="Logout" />
-
-        </menu>
-    </item>
+    <group
+        android:id="@+id/group_dynamic_tasks"
+        android:checkableBehavior="single">
     </group>
 
 </menu>

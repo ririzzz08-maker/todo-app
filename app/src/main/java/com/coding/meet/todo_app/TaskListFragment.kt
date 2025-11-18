@@ -1,7 +1,7 @@
 package com.coding.meet.todo_app
 
 import android.app.Dialog
-import android.content.Intent // <-- IMPORT TAMBAHAN
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -17,13 +17,14 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.NonNull // Import ini tidak diperlukan dan bisa dihapus
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.FileProvider
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
-import androidx.core.widget.NestedScrollView
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
@@ -48,11 +49,12 @@ import com.coding.meet.todo_app.viewmodels.TaskViewModel
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
+import coil.load
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 // --- IMPORT FIREBASE ---
-import com.google.firebase.auth.FirebaseAuth // <-- Import non-KTX
-// --- IMPORT CLOUDINARY (BARU) ---
+import com.google.firebase.auth.FirebaseAuth
+// --- IMPORT CLOUDINARY ---
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
@@ -64,36 +66,41 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Date
 import java.util.UUID
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
 
 class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsListener, ImageSourceBottomSheetFragment.ImageSourceListener {
 
-    // --- VARIABEL FIREBASE AUTH ---
     private lateinit var auth: FirebaseAuth
     private var currentUid: String? = null
-    // -----------------------------
+    private var taskToUpdate: Task? = null
 
-    // --- (Variabel Dialog tetap sama) ---
     private val addTaskDialog: Dialog by lazy {
         Dialog(requireContext(), R.style.DialogCustomTheme).apply {
             setupDialog(R.layout.add_task_dialog)
-            window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             window?.setGravity(Gravity.CENTER)
         }
     }
     private val updateTaskDialog: Dialog by lazy {
         Dialog(requireContext(), R.style.DialogCustomTheme).apply {
             setupDialog(R.layout.update_task_dialog)
-            window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             window?.setGravity(Gravity.CENTER)
         }
     }
     private val loadingDialog: Dialog by lazy {
         Dialog(requireContext(), R.style.DialogCustomTheme).apply {
-            setupDialog(R.layout.loading_dialog)
+            setupDialog(R.layout.custom_loading_dialog)
         }
     }
 
-    // --- ViewModel & Adapters ---
     private val taskViewModel: TaskViewModel by lazy {
         ViewModelProvider(requireActivity())[TaskViewModel::class.java]
     }
@@ -102,36 +109,46 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     private lateinit var checklistMainAdapter: ChecklistMainAdapter
     private val isListMutableLiveData = MutableLiveData<Boolean>().apply { postValue(true) }
 
-    // Variabel Kamera/Gambar (harus nullable)
     private var imageUri: Uri? = null
-    // Views dialog yang diakses dari launcher harus nullable
     private var ivTaskImage: ImageView? = null
     private var ivRemoveImage: ImageView? = null
     private var btnPickImage: ImageView? = null
 
-    // Variabel Launcher (diperbaiki agar menggunakan safe call 'ivTaskImage?')
-    private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-        if (isGranted) startCamera() else Toast.makeText(requireContext(), "Izin kamera ditolak.", Toast.LENGTH_SHORT).show()
-    }
-    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
-        if (isSuccess) {
-            imageUri?.let { uri ->
-                ivTaskImage?.setImageURI(uri) // Safe call
+    private val requestCameraPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) startCamera() else Toast.makeText(
+                requireContext(),
+                "Izin kamera ditolak.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    private val takePictureLauncher =
+        registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
+            if (isSuccess) {
+                imageUri?.let { uri ->
+                    ivTaskImage?.setImageURI(uri)
+                    ivTaskImage?.visibility = View.VISIBLE
+                    ivRemoveImage?.visibility = View.VISIBLE
+                }
+            } else Toast.makeText(requireContext(), "Gagal mengambil gambar.", Toast.LENGTH_SHORT)
+                .show()
+        }
+    private val pickImageLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                imageUri = it
+                ivTaskImage?.setImageURI(it)
                 ivTaskImage?.visibility = View.VISIBLE
                 ivRemoveImage?.visibility = View.VISIBLE
+            } ?: run {
+                Toast.makeText(
+                    requireContext(),
+                    "Tidak ada gambar yang dipilih.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-        } else Toast.makeText(requireContext(), "Gagal mengambil gambar.", Toast.LENGTH_SHORT).show()
-    }
-    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            imageUri = it
-            ivTaskImage?.setImageURI(it) // Safe call
-            ivTaskImage?.visibility = View.VISIBLE
-            ivRemoveImage?.visibility = View.VISIBLE
-        } ?: run { Toast.makeText(requireContext(), "Tidak ada gambar yang dipilih.", Toast.LENGTH_SHORT).show() }
-    }
+        }
 
-    // --- Variabel Views Global Fragment yang Aman ---
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var menuButton: ImageButton
@@ -143,8 +160,9 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     private lateinit var edSearchActual: TextInputLayout
     private lateinit var edSearchEdit: TextInputEditText
     private lateinit var taskRV: RecyclerView
-    private lateinit var addTaskFABtn: ExtendedFloatingActionButton
-    private lateinit var nestedScrollView: NestedScrollView
+    private lateinit var addTaskFABtn: android.widget.ImageButton
+    // Menghapus nestedScrollView karena tidak digunakan di sini dan menyebabkan error
+    // private lateinit var nestedScrollView: NestedScrollView
 
     private lateinit var checklistRV: RecyclerView
     private lateinit var tvChecklistHeader: TextView
@@ -161,10 +179,8 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --- 1. SET UP DAN CEK FIREBASE AUTH ---
-        setupFirebaseAuth() // <-- Sudah menggunakan FirebaseAuth.getInstance()
+        setupFirebaseAuth()
 
-        // --- 2. Hubungkan Views Fragment ---
         menuButton = view.findViewById(R.id.menu_button)
         chipContainer = view.findViewById(R.id.chipContainer)
         profileCard = view.findViewById(R.id.profileCard)
@@ -175,52 +191,152 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         edSearchEdit = view.findViewById(R.id.edSearchEdit)
         taskRV = view.findViewById(R.id.taskRV)
         addTaskFABtn = view.findViewById(R.id.addTaskFABtn)
-        nestedScrollView = view.findViewById(R.id.nestedScrollView)
+        // Menghapus inisialisasi nestedScrollView
+        // nestedScrollView = view.findViewById(R.id.nestedScrollView)
         drawerLayout = requireActivity().findViewById(R.id.drawer_layout)
         navView = requireActivity().findViewById(R.id.nav_view)
         checklistRV = view.findViewById(R.id.checklistRV)
         tvChecklistHeader = view.findViewById(R.id.tvChecklistHeader)
         tvTaskHeader = view.findViewById(R.id.tvTaskHeader)
 
-        // --- 3. Panggil Setup ---
-        setupDialogs() // <-- Perubahan ada di dalam fungsi ini
+        setupDialogs()
         setupTaskRecyclerView()
         setupChecklistRecyclerView()
         setupNavigationDrawer()
         setupHeaderListeners()
         setupSearch()
+        observeTaskToEdit()
+        observeChecklistToEdit()
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (edSearchActual.visibility == View.VISIBLE) {
+                    // Jika search bar terbuka, tutup search bar-nya
+                    closeSearch()
+                } else {
+                    // Jika search bar tertutup, biarkan sistem yg handle
+                    isEnabled = false
+                    try {
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    } catch (e: IllegalStateException) {
+                        // Menghindari crash jika ada navigasi ganda
+                    }
+                }
+            }
+        })
+    }
+    private fun observeTaskToEdit() {
+        taskViewModel.taskToEdit.observe(viewLifecycleOwner) { task ->
+            if (task != null) {
+                // Ada task yang dipilih untuk diedit!
+                // Gunakan logika Anda yang sudah ada untuk menampilkan dialog
+
+                taskToUpdate = task // Set task global
+
+                val dialogAddETTitle =
+                    addTaskDialog.findViewById<TextInputEditText>(R.id.addETTitle)
+                val dialogAddETDesc =
+                    addTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
+                val ivTaskImage = addTaskDialog.findViewById<ImageView>(R.id.ivTaskImage)
+                val ivRemoveImage = addTaskDialog.findViewById<ImageView>(R.id.ivRemoveImage)
+
+                dialogAddETTitle.setText(task.title)
+                dialogAddETDesc.setText(task.description)
+
+                imageUri = null // Reset URI
+
+                if (task.imagePath.isNullOrEmpty()) {
+                    ivTaskImage?.visibility = View.GONE
+                    ivRemoveImage?.visibility = View.GONE
+                } else {
+                    ivTaskImage?.visibility = View.VISIBLE
+                    ivRemoveImage?.visibility = View.VISIBLE
+                    ivTaskImage?.load(task.imagePath) {
+                        crossfade(true)
+                    }
+                }
+
+                // Tampilkan dialog
+                addTaskDialog.show()
+
+                // Beri tahu ViewModel bahwa kita sudah menangani event ini
+                taskViewModel.doneEditingTask()
+            }
+        }
     }
 
-    // ==========================================================
-    // FIREBASE AUTHENTICATION
-    // ==========================================================
+
+    // Di dalam kelas TaskListFragment.kt
 
     /**
-     * Menginisialisasi Auth dan langsung mengecek status user.
+     * Fungsi helper untuk menutup & mereset search bar
      */
+    private fun closeSearch() {
+        // Cek dulu apakah search bar memang sedang terlihat
+        if (edSearchActual.visibility == View.VISIBLE) {
+
+            // 1. Kosongkan teks pencarian
+            edSearchEdit.setText("")
+
+            // 2. Sembunyikan keyboard
+            try {
+                requireContext().hideKeyBoard(edSearchEdit)
+            } catch (e: Exception) {
+                Log.e("TaskListFragment", "Gagal menyembunyikan keyboard", e)
+            }
+
+            // 3. Tukar kembali visibilitasnya
+            edSearchActual.visibility = View.GONE
+            chipContainer.visibility = View.VISIBLE
+        }
+    }
+// ==========================================================
+// TEMPEL FUNGSI BARU ANDA DI SINI
+// ==========================================================
+    /**
+     * Mengamati event "edit checklist" dari ViewModel.
+     * Dipicu oleh MainActivity saat item drawer diklik.
+     */
+    private fun observeChecklistToEdit() {
+        taskViewModel.checklistToEdit.observe(viewLifecycleOwner) { checklist ->
+            if (checklist != null) {
+
+                // Buat Bundle manual
+                val bundle = Bundle().apply {
+                    // "checklist_obj" adalah kunci yang sama dengan di AddChecklistFragment
+                    putParcelable("checklist_obj", checklist)
+                }
+
+                try {
+                    // Navigasi menggunakan ID action dan Bundle
+                    findNavController().navigate(
+                        R.id.action_taskListFragment_to_editChecklistFragment,
+                        bundle
+                    )
+                } catch (e: Exception) {
+                    Log.e("TaskListFragment", "Navigasi ke EditChecklistFragment gagal", e)
+                    Toast.makeText(requireContext(), "Gagal membuka checklist", Toast.LENGTH_SHORT).show()
+                }
+
+                // Beri tahu ViewModel bahwa kita sudah menangani event ini
+                taskViewModel.doneEditingChecklist()
+            }
+        }
+    }
     private fun setupFirebaseAuth() {
-        auth = FirebaseAuth.getInstance() // <-- Sudah benar
+        auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
 
         if (currentUser == null) {
-            // TIDAK ADA USER, "usir" ke Login
             Toast.makeText(requireContext(), "Anda harus login...", Toast.LENGTH_LONG).show()
-
-            // Pindah ke LoginActivity
             val intent = Intent(requireActivity(), LoginActivity2::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
-            requireActivity().finish() // Tutup activity ini
+            requireActivity().finish()
         } else {
-            // ADA USER, kita aman.
             currentUid = currentUser.uid
             Log.d("TaskListFragment", "User $currentUid terautentikasi. Memuat data...")
-
-            // --- PERUBAHAN 1 DITERAPKAN DI SINI ---
-            taskViewModel.setFirebaseUser(currentUid!!) // <-- Sudah benar
-            // ----------------------------------------
-
-            // Baru kita panggil semua fungsi untuk memuat data
+            taskViewModel.setFirebaseUser(currentUid!!)
             callGetTaskList()
             observeChecklistData()
             callSortByLiveData()
@@ -228,30 +344,34 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         }
     }
 
-    /**
-     * Fungsi untuk Logout.
-     */
     private fun logoutUser() {
         auth.signOut()
-
-        // Kembali ke Login
         val intent = Intent(requireActivity(), LoginActivity2::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         requireActivity().finish()
     }
 
-    // ==========================================================
-    // CHECKLIST RECYCLERVIEW SETUP
-    // ==========================================================
     private fun setupChecklistRecyclerView() {
         checklistMainAdapter = ChecklistMainAdapter(
             isList = isListMutableLiveData,
             onEditClick = { checklist ->
+
+                // ==========================================================
+                // --- PERBAIKAN: Kirim seluruh objek, bukan hanya ID ---
+                // ==========================================================
                 val bundle = Bundle().apply {
-                    putString("checklist_id", checklist.id)
+                    // Gunakan 'putParcelable' (bukan putString)
+                    // Gunakan kunci 'checklist_obj' (bukan checklist_id)
+                    putParcelable("checklist_obj", checklist)
                 }
-                findNavController().navigate(R.id.action_taskListFragment_to_editChecklistFragment, bundle)
+                // ==========================================================
+
+                // Aksi navigasi Anda sudah benar
+                findNavController().navigate(
+                    R.id.action_taskListFragment_to_editChecklistFragment,
+                    bundle
+                )
             },
             onDeleteClick = { checklist ->
                 taskViewModel.deleteChecklist(checklist)
@@ -260,12 +380,12 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         )
         checklistRV.adapter = checklistMainAdapter
 
-        // Observer untuk Layout Manager
         isListMutableLiveData.observe(viewLifecycleOwner) { isList ->
             if (isList) {
                 checklistRV.layoutManager = LinearLayoutManager(requireContext())
             } else {
-                checklistRV.layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
+                checklistRV.layoutManager =
+                    StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
             }
             if (::checklistMainAdapter.isInitialized) {
                 checklistMainAdapter.notifyDataSetChanged()
@@ -295,8 +415,6 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         }
     }
 
-    // --- PERUBAHAN 2 DITERAPKAN DI SINI ---
-    // (Fungsi ini sudah benar)
     private fun callGetTaskList() {
         CoroutineScope(Dispatchers.Main).launch {
             taskViewModel.taskStateFlow.collectLatest { statusResult ->
@@ -304,16 +422,19 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
                     Status.LOADING -> loadingDialog.show()
                     Status.SUCCESS -> {
                         loadingDialog.dismiss()
-
                         val taskList = statusResult.data
-                        taskRVVBListAdapter.submitList(taskList) // Langsung kirim list-nya
+                        taskRVVBListAdapter.submitList(taskList)
 
                         if (taskList?.isNotEmpty() == true) {
                             tvTaskHeader.visibility = View.VISIBLE
                         } else {
                             tvTaskHeader.visibility = View.GONE
                         }
+                        // --- PANGGIL FUNGSI UNTUK UPDATE NAVIGATION DRAWER DI SINI ---
+                        updateNavMenuWithTasks(taskList)
+                        // -------------------------------------------------------------
                     }
+
                     Status.ERROR -> {
                         loadingDialog.dismiss()
                         statusResult.message?.let { requireContext().longToastShow(it) }
@@ -322,14 +443,12 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
             }
         }
     }
-    // ----------------------------------------
 
     private fun setupTaskRecyclerView() {
-        // ... (Kode Anda, sudah benar) ...
-        // Observer untuk Layout Manager
         isListMutableLiveData.observe(viewLifecycleOwner) {
             if (it) {
-                taskRV.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+                taskRV.layoutManager =
+                    LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
             } else {
                 taskRV.layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
             }
@@ -338,34 +457,39 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
             }
         }
 
-        taskRVVBListAdapter = TaskRVVBListAdapter(isList = isListMutableLiveData) { type, position, task ->
-            if (type == "delete") {
-                taskViewModel.deleteTaskUsingId(task.id)
-                restoreDeletedTask(task)
-            } else if (type == "update") {
-                // Views update dialog ditemukan lokal di sini
-                val updateETTitle = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskTitle)
-                val updateETDesc = updateTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
-                val updateTaskBtn = updateTaskDialog.findViewById<Button>(R.id.updateTaskBtn)
-                val updateETTitleL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
-                val updateETDescL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL )
+        taskRVVBListAdapter =
+            TaskRVVBListAdapter(isList = isListMutableLiveData) { type, position, task ->
+                if (type == "delete") {
+                    taskViewModel.deleteTaskUsingId(task.id)
+                    restoreDeletedTask(task)
+                } else if (type == "update") {
+                    taskToUpdate = task
 
-                updateETTitle.setText(task.title)
-                updateETDesc.setText(task.description)
-                updateTaskBtn.setOnClickListener {
-                    if (validateEditText(updateETTitle, updateETTitleL)
-                        && validateEditText(updateETDesc, updateETDescL)
-                    ) {
-                        // FIX: Tambah imagePath
-                        val updateTask = Task(task.id, updateETTitle.text.toString().trim(), updateETDesc.text.toString().trim(), Date(), task.imagePath)
-                        requireContext().hideKeyBoard(it)
-                        updateTaskDialog.dismiss()
-                        taskViewModel.updateTask(updateTask)
+                    val dialogAddETTitle =
+                        addTaskDialog.findViewById<TextInputEditText>(R.id.addETTitle)
+                    val dialogAddETDesc =
+                        addTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
+                    val ivTaskImage = addTaskDialog.findViewById<ImageView>(R.id.ivTaskImage)
+                    val ivRemoveImage = addTaskDialog.findViewById<ImageView>(R.id.ivRemoveImage)
+
+                    dialogAddETTitle.setText(task.title)
+                    dialogAddETDesc.setText(task.description)
+
+                    imageUri = null
+
+                    if (task.imagePath.isNullOrEmpty()) {
+                        ivTaskImage?.visibility = View.GONE
+                        ivRemoveImage?.visibility = View.GONE
+                    } else {
+                        ivTaskImage?.visibility = View.VISIBLE
+                        ivRemoveImage?.visibility = View.VISIBLE
+                        ivTaskImage?.load(task.imagePath) {
+                            crossfade(true)
+                        }
                     }
+                    addTaskDialog.show()
                 }
-                updateTaskDialog.show()
             }
-        }
         taskRV.adapter = taskRVVBListAdapter
         ViewCompat.setNestedScrollingEnabled(taskRV, false)
         taskRVVBListAdapter.registerAdapterDataObserver(object :
@@ -377,103 +501,91 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun setupNavigationDrawer() {
-        // ... (Kode Anda, sudah benar) ...
-        // Views untuk update dialog (ditemukan lokal di sini)
         val updateETTitle = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskTitle)
         val updateETTitleL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
         val updateETDesc = updateTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
-        val updateETDescL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL )
+        val updateETDescL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL)
         val updateTaskBtn = updateTaskDialog.findViewById<Button>(R.id.updateTaskBtn)
         val updateCloseImg = updateTaskDialog.findViewById<ImageView>(R.id.closeImg)
         updateCloseImg.setOnClickListener { updateTaskDialog.dismiss() }
 
-
         menuButton.setOnClickListener {
             if (drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.closeDrawer(GravityCompat.START) else drawerLayout.openDrawer(GravityCompat.START)
         }
-        navView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_tambah_label -> {
-                    // Views add dialog ditemukan di setupDialogs, gunakan lokal
-                    val addETTitle = addTaskDialog.findViewById<TextInputEditText>(R.id.addETTitle)
-                    val addETDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
-                    clearEditText(addETTitle, addTaskDialog.findViewById(R.id.edTaskTitleL))
-                    clearEditText(addETDesc, addTaskDialog.findViewById(R.id.edTaskDescL ))
-                    addTaskDialog.show()
-                }
-                R.id.nav_tugas -> {
-                    val taskList = taskRVVBListAdapter.currentList
-                    if (taskList.isNotEmpty()) {
-                        val taskToUpdate = taskList[0]
-                        updateETTitle.setText(taskToUpdate.title)
-                        updateETDesc.setText(taskToUpdate.description)
-                        updateTaskBtn.setOnClickListener {
-                            if (validateEditText(updateETTitle, updateETDescL) && validateEditText(updateETDesc, updateETDescL)) {
-                                // FIX: Tambah imagePath
-                                val updatedTask = Task(taskToUpdate.id, updateETTitle.text.toString().trim(), updateETDesc.text.toString().trim(), Date(), taskToUpdate.imagePath)
-                                requireContext().hideKeyBoard(it)
-                                updateTaskDialog.dismiss()
-                                taskViewModel.updateTask(updatedTask)
-                            }
-                        }
-                        updateTaskDialog.show()
-                    } else {
-                        Toast.makeText(requireContext(), "Belum ada tugas untuk diedit", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                // --- LOGIKA LOGOUT DITAMBAHKAN ---
-                R.id.nav_logout -> {
-                    logoutUser()
-                }
-                // ---------------------------------
-            }
-            drawerLayout.closeDrawer(GravityCompat.START)
-            true
+
+
+    }
+
+    /**
+     * FUNGSI BARU: Mengupdate item menu navigasi dengan judul-judul tugas yang ada.
+     */
+    private fun updateNavMenuWithTasks(taskList: List<Task>?) {
+        val navMenu = navView.menu
+        val dynamicTasksGroup = navMenu.findItem(R.id.group_dynamic_tasks)?.subMenu
+
+        // Penting: Hapus semua item yang sudah ada di grup dinamis
+        dynamicTasksGroup?.clear()
+
+        // Tambahkan item menu baru untuk setiap tugas
+        // Periksa apakah dynamicTasksGroup tidak null sebelum menambahkan item
+        taskList?.forEach { task ->
+            dynamicTasksGroup?.add(
+                R.id.group_dynamic_tasks, // Grup ID
+                View.generateViewId(),    // ID unik untuk MenuItem (Integer)
+                0,                        // Order
+                task.title                // Judul yang ditampilkan
+            )?.setIcon(R.drawable.checkbox_icon_selector) // Ikon default untuk catatan
         }
     }
 
+
     private fun setupHeaderListeners() {
-        // ... (Kode Anda, sudah benar) ...
-        chipContainer.setOnClickListener { Toast.makeText(requireContext(), "Chip Container Diklik", Toast.LENGTH_SHORT).show() }
+        // Ganti listener dari 'tvTelusuri' ke 'chipContainer'
+        chipContainer.setOnClickListener {
+            // Sembunyikan tombol "Telusuri"
+            chipContainer.visibility = View.GONE
+            // Tampilkan kotak pencarian
+            edSearchActual.visibility = View.VISIBLE
+            // Langsung fokus ke kotak pencarian
+            edSearchEdit.requestFocus()
+
+            // Tampilkan keyboard
+            try {
+                // GUNAKAN requireContext() DI SINI
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.showSoftInput(edSearchEdit, InputMethodManager.SHOW_IMPLICIT)
+            } catch (e: Exception) {
+                Log.e("TaskListFragment", "Gagal menampilkan keyboard", e)
+            }
+        }
+
         profileCard.setOnClickListener { findNavController().navigate(R.id.profileFragment) }
 
-        // Tombol Sort (panah)
         iconFilter.setOnClickListener {
             showSortBottomSheet()
         }
 
-        // Tombol Grid/List
         iconSort.setOnClickListener {
             val currentIsList = isListMutableLiveData.value ?: true
             isListMutableLiveData.postValue(!currentIsList)
 
             if (!currentIsList) {
-                // Sekarang mode List, tampilkan ikon Grid
-                iconSort.setImageResource(R.drawable.grid)
-            } else {
-                // Sekarang mode Grid, tampilkan ikon List
                 iconSort.setImageResource(R.drawable.list)
+            } else {
+                iconSort.setImageResource(R.drawable.grid)
             }
-        }
-
-        tvTelusuri.setOnClickListener {
-            edSearchActual.visibility = View.VISIBLE
-            edSearchEdit.requestFocus()
-            Toast.makeText(requireContext(), "Input Pencarian Aktif", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // --- FUNGSI INI DIMODIFIKASI TOTAL ---
     private fun setupDialogs() {
-        // Views Add Dialog diinisialisasi secara lokal di sini
         val addCloseImg = addTaskDialog.findViewById<ImageView>(R.id.closeImg)
         val dialogAddETTitle = addTaskDialog.findViewById<TextInputEditText>(R.id.addETTitle)
         val dialogAddETTitleL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
         val dialogAddETDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
-        val dialogAddETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL )
+        val dialogAddETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL)
 
         ivRemoveImage = addTaskDialog.findViewById(R.id.ivRemoveImage)
-        ivTaskImage = addTaskDialog.findViewById<ImageView>(R.id.ivTaskImage) // Pastikan ini di-cast
+        ivTaskImage = addTaskDialog.findViewById(R.id.ivTaskImage)
         btnPickImage = addTaskDialog.findViewById(R.id.btnPickImage)
 
         addCloseImg.setOnClickListener { addTaskDialog.dismiss() }
@@ -487,12 +599,18 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         }
 
         dialogAddETTitle.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) { validateEditText(dialogAddETTitle, dialogAddETTitleL) }
+            override fun afterTextChanged(s: Editable) {
+                validateEditText(dialogAddETTitle, dialogAddETTitleL)
+            }
+
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
         dialogAddETDesc.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) { validateEditText(dialogAddETDesc, dialogAddETDescL) }
+            override fun afterTextChanged(s: Editable) {
+                validateEditText(dialogAddETDesc, dialogAddETDescL)
+            }
+
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
@@ -509,89 +627,93 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
             imageSourceBottomSheet.show(parentFragmentManager, ImageSourceBottomSheetFragment.TAG)
         }
 
-        // --- INI BAGIAN YANG DIUBAH ---
         val saveTaskBtn = addTaskDialog.findViewById<Button>(R.id.saveBtn)
         saveTaskBtn.setOnClickListener {
-            // Kita tidak lagi menyimpan di sini.
-            // Kita panggil fungsi baru yang lebih rapi.
-            handleSaveTask() // Panggil "otak" baru
+            handleSaveTask()
         }
-        // --- SELESAI PERUBAHAN ---
     }
 
-    // --- TAMBAHKAN DUA FUNGSI BARU DI BAWAH INI ---
-
-    /**
-     * FUNGSI BARU 1: Menangani logika validasi dan upload
-     */
     private fun handleSaveTask() {
-        // Ambil lagi views dari dialog
         val dialogAddETTitle = addTaskDialog.findViewById<TextInputEditText>(R.id.addETTitle)
         val dialogAddETTitleL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
         val dialogAddETDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
-        val dialogAddETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL )
+        val dialogAddETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL)
 
-        // 1. Validasi Input
-        if (!validateEditText(dialogAddETTitle, dialogAddETTitleL) || !validateEditText(dialogAddETDesc, dialogAddETDescL)) {
-            Toast.makeText(requireContext(), "Judul dan Deskripsi tidak boleh kosong", Toast.LENGTH_SHORT).show()
+        if (!validateEditText(dialogAddETTitle, dialogAddETTitleL) || !validateEditText(
+                dialogAddETDesc,
+                dialogAddETDescL
+            )
+        ) {
+            Toast.makeText(
+                requireContext(),
+                "Judul dan Deskripsi tidak boleh kosong",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
         val title = dialogAddETTitle.text.toString().trim()
         val description = dialogAddETDesc.text.toString().trim()
 
-        // 2. Cek apakah ada gambar yang dipilih
         if (imageUri != null) {
-            // JIKA ADA GAMBAR: Upload dulu ke Cloudinary
             loadingDialog.show()
 
             MediaManager.get().upload(imageUri)
                 .callback(object : UploadCallback {
                     override fun onStart(requestId: String?) {}
-
                     override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
-
-                    override fun onSuccess(requestId: String?, resultData: MutableMap<Any?, Any?>?) {
+                    override fun onSuccess(
+                        requestId: String?,
+                        resultData: MutableMap<Any?, Any?>?
+                    ) {
                         loadingDialog.dismiss()
-
-                        // Ambil URL aman (HTTPS) dari hasil upload
                         val imageUrl = resultData?.get("secure_url") as? String
-
-                        // Panggil fungsi simpan ke database dengan URL gambar
                         saveTaskToDatabase(title, description, imageUrl)
                     }
 
                     override fun onError(requestId: String?, error: ErrorInfo?) {
                         loadingDialog.dismiss()
-                        Toast.makeText(requireContext(), "Upload gambar gagal: ${error?.description}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            requireContext(),
+                            "Upload gambar gagal: ${error?.description}",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
 
                     override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
                 })
-                .dispatch() // <-- Panggil ini untuk memulai upload
+                .dispatch()
 
         } else {
-            // JIKA TIDAK ADA GAMBAR: Langsung simpan
             saveTaskToDatabase(title, description, null)
         }
     }
 
-    /**
-     * FUNGSI BARU 2: Menyimpan data Task ke ViewModel (Firebase)
-     */
     private fun saveTaskToDatabase(title: String, description: String, imageUrl: String?) {
-        val newTask = Task(
-            UUID.randomUUID().toString(), // ID ini akan diganti oleh Firebase di Repository
-            title,
-            description,
-            Date(),
-            imageUrl // <-- Simpan URL online (HTTPS)
-        )
+        if (taskToUpdate == null) {
+            val newTask = Task(
+                UUID.randomUUID().toString(),
+                title,
+                description,
+                Date(),
+                imageUrl
+            )
+            taskViewModel.insertTask(newTask)
+            Toast.makeText(requireContext(), "Catatan disimpan!", Toast.LENGTH_SHORT).show()
 
-        // Reset imageUri global
+        } else {
+            val updatedTask = taskToUpdate!!.copy(
+                title = title,
+                description = description,
+                imagePath = imageUrl
+            )
+            taskViewModel.updateTask(updatedTask)
+            Toast.makeText(requireContext(), "Catatan diperbarui!", Toast.LENGTH_SHORT).show()
+        }
+
         imageUri = null
+        taskToUpdate = null
 
-        // Sembunyikan keyboard, tutup dialog, dan kirim ke ViewModel
         try {
             view?.let { requireContext().hideKeyBoard(it) }
         } catch (e: Exception) {
@@ -599,15 +721,9 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         }
 
         addTaskDialog.dismiss()
-        taskViewModel.insertTask(newTask)
-
-        Toast.makeText(requireContext(), "Catatan disimpan!", Toast.LENGTH_SHORT).show()
     }
 
-    // --- SISA KODE (SEMUANYA SUDAH BENAR, TIDAK PERLU DIUBAH) ---
-
     private fun showSortBottomSheet() {
-        // ... (kode Anda)
         try {
             val bottomSheet = SortBottomSheetFragment()
             bottomSheet.setOnSortSelectedListener { sortType ->
@@ -620,14 +736,15 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun applySorting(sortType: String) {
-        // ... (kode Anda)
         when (sortType) {
             "custom" -> {
                 taskViewModel.setSortBy(Pair("title", true))
             }
+
             "created_date" -> {
                 taskViewModel.setSortBy(Pair("date", true))
             }
+
             "modified_date" -> {
                 taskViewModel.setSortBy(Pair("date", false))
             }
@@ -635,13 +752,11 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun restoreDeletedTask(deletedTask: Task) {
-        // ... (kode Anda)
         Snackbar.make(requireView(), "Deleted '${deletedTask.title}'", Snackbar.LENGTH_LONG)
             .setAction("Undo") { taskViewModel.insertTask(deletedTask) }.show()
     }
 
     private fun setupSearch() {
-        // ... (kode Anda)
         edSearchEdit.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
@@ -655,7 +770,8 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
                 if (queryString.isNotEmpty()) {
                     taskViewModel.searchTaskList(queryString)
                     checklistObserver?.removeObservers(viewLifecycleOwner)
-                    checklistObserver = taskViewModel.searchChecklist(queryString, isAsc, sortByName)
+                    checklistObserver =
+                        taskViewModel.searchChecklist(queryString, isAsc, sortByName)
                     observeChecklistDataAfterSearch()
                 } else {
                     callSortByLiveData()
@@ -665,15 +781,27 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
         })
         edSearchEdit.setOnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                requireContext().hideKeyBoard(v)
-                return@setOnEditorActionListener true
+
+                // 1. Sembunyikan keyboard
+                try {
+                    requireContext().hideKeyBoard(v)
+                } catch (e: Exception) {
+                    Log.e("TaskListFragment", "Gagal menyembunyikan keyboard", e)
+                }
+
+                // 2. Sembunyikan kotak pencarian
+                edSearchActual.visibility = View.GONE
+                // 3. Tampilkan kembali tombol "Telusuri"
+                chipContainer.visibility = View.VISIBLE
+
+                true
+            } else {
+                false
             }
-            false
         }
     }
 
     private fun observeChecklistDataAfterSearch() {
-        // ... (kode Anda)
         checklistObserver?.observe(viewLifecycleOwner) { listChecklist ->
             checklistMainAdapter.submitList(listChecklist)
             if (listChecklist.isNullOrEmpty()) {
@@ -687,14 +815,12 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun callSortByLiveData() {
-        // ... (kode Anda)
         taskViewModel.sortByLiveData.observe(viewLifecycleOwner) {
             taskViewModel.getTaskList(it.second, it.first)
         }
     }
 
     private fun statusCallback() {
-        // ... (kode Anda)
         taskViewModel.statusLiveData.observe(viewLifecycleOwner) { statusResponse ->
             when (statusResponse.status) {
                 Status.LOADING -> loadingDialog.show()
@@ -708,6 +834,7 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
                         }
                     }
                 }
+
                 Status.ERROR -> {
                     loadingDialog.dismiss()
                     statusResponse.message?.let { message -> requireContext().longToastShow(message) }
@@ -717,28 +844,36 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
     }
 
     private fun startCamera() {
-        // ... (kode Anda)
         val photosDir = File(requireContext().externalCacheDir, "photos")
         if (!photosDir.exists()) photosDir.mkdirs()
         val newPhotoFile = File(photosDir, "${System.currentTimeMillis()}.jpg")
-        imageUri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", newPhotoFile)
+        imageUri = FileProvider.getUriForFile(
+            requireContext(),
+            "${requireContext().packageName}.provider",
+            newPhotoFile
+        )
         takePictureLauncher.launch(imageUri)
     }
 
     override fun onOptionSelected(option: String) {
-        // ... (kode Anda)
         when (option) {
             "list" -> {
+                // Navigasi ke EditChecklistFragment untuk membuat checklist baru
                 findNavController().navigate(R.id.action_taskListFragment_to_editChecklistFragment)
             }
+
             "catatan" -> {
-                // Views add dialog ditemukan di setupDialogs, gunakan lokal
+                // Logika untuk menambahkan atau mengedit catatan
+                // Pastikan dialog disiapkan untuk mode "tambah baru"
                 val addETTitle = addTaskDialog.findViewById<TextInputEditText>(R.id.addETTitle)
                 val addETDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
 
-                clearEditText(addETTitle, addTaskDialog.findViewById(R.id.edTaskTitleL))
-                clearEditText(addETDesc, addTaskDialog.findViewById(R.id.edTaskDescL ))
+                taskToUpdate = null // Penting: reset untuk mode tambah baru
 
+                clearEditText(addETTitle, addTaskDialog.findViewById(R.id.edTaskTitleL))
+                clearEditText(addETDesc, addTaskDialog.findViewById(R.id.edTaskDescL))
+
+                // Sembunyikan dan bersihkan gambar jika ada dari mode edit sebelumnya
                 imageUri = null
                 ivTaskImage?.setImageURI(null)
                 ivTaskImage?.visibility = View.GONE
@@ -746,25 +881,40 @@ class TaskListFragment : Fragment(), AddOptionsBottomSheetFragment.AddOptionsLis
 
                 addTaskDialog.show()
             }
+
             "gambar" -> {
+                // Logika untuk menambahkan catatan dengan gambar
+                // Mirip dengan "catatan" tetapi langsung memicu pemilih gambar
                 val addETTitle = addTaskDialog.findViewById<TextInputEditText>(R.id.addETTitle)
                 val addETDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.addETDesc)
                 val addETTitleL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
-                val addETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL )
+                val addETDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescL)
+
+                taskToUpdate = null // Penting: reset untuk mode tambah baru
 
                 clearEditText(addETTitle, addETTitleL)
                 clearEditText(addETDesc, addETDescL)
+
+                // Pastikan gambar direset jika ada
+                imageUri = null
+                ivTaskImage?.setImageURI(null)
+                ivTaskImage?.visibility = View.GONE
+                ivRemoveImage?.visibility = View.GONE
+
+                // Tampilkan dialog tambah tugas
                 addTaskDialog.show()
 
+                // Langsung tampilkan bottom sheet untuk memilih sumber gambar
                 val imageSourceBottomSheet = ImageSourceBottomSheetFragment()
                 imageSourceBottomSheet.listener = this
-                imageSourceBottomSheet.show(parentFragmentManager, AddOptionsBottomSheetFragment.TAG)
+                imageSourceBottomSheet.show(
+                    parentFragmentManager,
+                    AddOptionsBottomSheetFragment.TAG
+                )
             }
         }
     }
-
     override fun onSourceSelected(source: String) {
-        // ... (kode Anda)
         when (source) {
             ImageSourceBottomSheetFragment.SOURCE_CAMERA -> requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
             ImageSourceBottomSheetFragment.SOURCE_GALLERY -> pickImageLauncher.launch("image/*")

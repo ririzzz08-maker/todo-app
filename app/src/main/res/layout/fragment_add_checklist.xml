@@ -6,48 +6,49 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#f5f5dc">
+    android:background="#f5f5dc"> <com.google.android.material.appbar.AppBarLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/checklist_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="?attr/actionBarSize"
+        android:background="#f5f5dc"
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/checklist_toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="#f5f5dc"
-            app:navigationIcon="@drawable/ic_close"
-            app:title="">
+        app:titleTextColor="@android:color/black"
 
-            <ImageView
-                android:id="@+id/btnSaveChecklist"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:src="@drawable/simpan"
-                android:layout_gravity="end"
-                android:paddingHorizontal="16dp"
-                android:contentDescription="@string/btn_saveadd_image"
-                app:tint="#333333"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackgroundBorderless"/>
+        app:navigationIcon="@drawable/ic_close"
+        app:title="">
 
-            <ImageView
-                android:id="@+id/btnPickChecklistImage"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_camera"
-                android:layout_gravity="end"
-                android:paddingHorizontal="16dp"
-                android:contentDescription="@string/desc_pilihgambar_button"
-                app:tint="#333333"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackgroundBorderless"/>
+        <ImageView
+            android:id="@+id/btnSaveChecklist"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/simpan"
+            android:layout_gravity="end"
+            android:paddingHorizontal="16dp"
+            android:contentDescription="@string/btn_saveadd_image"
+            app:tint="#333333"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
 
-        </com.google.android.material.appbar.MaterialToolbar>
-    </com.google.android.material.appbar.AppBarLayout>
+        <ImageView
+            android:id="@+id/btnPickChecklistImage"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_camera"
+            android:layout_gravity="end"
+            android:paddingHorizontal="16dp"
+            android:contentDescription="@string/desc_pilihgambar_button"
+            app:tint="#333333"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+    </com.google.android.material.appbar.MaterialToolbar>
+</com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -66,6 +67,11 @@
                 android:hint="@string/hint_jdllist_text"
                 android:textSize="24sp"
                 android:textStyle="bold"
+
+                android:textColor="@android:color/black"
+
+                android:textColorHint="@android:color/darker_gray"
+
                 android:background="@android:color/transparent"
                 android:layout_marginBottom="16dp"
                 android:inputType="textCapSentences"/>
@@ -100,6 +106,7 @@
                     app:tint="@color/white"
                     android:contentDescription="@string/desc_tutup_button" />
             </FrameLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvChecklistItems"
                 android:layout_width="match_parent"
@@ -150,7 +157,9 @@
                 android:text="@string/label_cntngitm"
                 android:textStyle="bold"
                 android:layout_marginTop="16dp"
-                android:visibility="gone" />
+                android:visibility="gone"
+
+                android:textColor="@android:color/black"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvCheckedItems"

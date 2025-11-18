@@ -2,9 +2,10 @@ package com.coding.meet.todo_app
 
 // --- IMPORT YANG DIPERLUKAN ---
 import android.Manifest
-import android.app.Dialog // <-- IMPORT BARU
+import android.app.Dialog
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,17 +17,21 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
-// HAPUS: import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
 import com.coding.meet.todo_app.adapters.CheckedItemAdapter
-import com.coding.meet.todo_app.models.ChecklistItem
 import com.coding.meet.todo_app.adapters.ChecklistItemAdapter
 import com.coding.meet.todo_app.adapters.ChecklistItemListener
 import com.coding.meet.todo_app.models.Checklist
+import com.coding.meet.todo_app.models.ChecklistItem
+import com.coding.meet.todo_app.utils.setupDialog
 import com.coding.meet.todo_app.viewmodels.TaskViewModel
 import com.google.android.material.appbar.MaterialToolbar
 import java.io.File
@@ -35,27 +40,21 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
-import android.util.Log
-// --- IMPORT BARU ---
-import coil.load // Untuk memuat gambar dari URL
-import com.cloudinary.android.MediaManager
-import com.cloudinary.android.callback.ErrorInfo
-import com.cloudinary.android.callback.UploadCallback
-import com.coding.meet.todo_app.utils.setupDialog // Helper dialog
 
 class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBottomSheetFragment.ImageSourceListener {
 
     // --- DIALOG LOADING (BARU) ---
     private val loadingDialog: Dialog by lazy {
         Dialog(requireContext(), R.style.DialogCustomTheme).apply {
-            setupDialog(R.layout.loading_dialog)
+            setupDialog(R.layout.custom_loading_dialog)
         }
     }
 
     private val taskViewModel: TaskViewModel by lazy {
         ViewModelProvider(requireActivity())[TaskViewModel::class.java]
     }
-    private val args: AddChecklistFragmentArgs by navArgs()
+
+    // --- MODIFIKASI: 'args' sekarang akan berisi 'checklist_obj' ---
     private var editingChecklist: Checklist? = null
 
     private var activeItems = mutableListOf<ChecklistItem>()
@@ -79,9 +78,8 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
     private lateinit var ivDeleteChecklistImage: ImageView
 
     // --- Variabel Gambar ---
-    // 'checklistImageUri' HANYA untuk gambar LOKAL BARU yang dipilih
     private var checklistImageUri: Uri? = null
-    private var currentChecklistPhotoPath: String? = null // Untuk kamera
+    private var currentChecklistPhotoPath: String? = null
 
     // --- LAUNCHER GAMBAR (Tetap Sama) ---
     private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -90,7 +88,7 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
     private val takeChecklistPictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
         if (isSuccess) {
             checklistImageUri?.let { uri ->
-                ivChecklistImage.setImageURI(uri) // Tampilkan gambar lokal baru
+                ivChecklistImage.setImageURI(uri)
                 frameLayoutChecklistImageContainer.visibility = View.VISIBLE
                 ivDeleteChecklistImage.visibility = View.VISIBLE
             }
@@ -102,8 +100,8 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
     }
     private val pickChecklistImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            checklistImageUri = it // Simpan URI lokal baru
-            ivChecklistImage.setImageURI(it) // Tampilkan gambar lokal baru
+            checklistImageUri = it
+            ivChecklistImage.setImageURI(it)
             frameLayoutChecklistImageContainer.visibility = View.VISIBLE
             ivDeleteChecklistImage.visibility = View.VISIBLE
         } ?: run {
@@ -143,18 +141,45 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
         checkedAdapter = CheckedItemAdapter(checkedItems, this)
         rvCheckedItems.adapter = checkedAdapter
 
-        // --- Logika Mode Edit vs Mode Buat Baru ---
-        val checklistId = args.checklistId
-        if (checklistId == null) {
-            // MODE BUAT BARU
+        // ==========================================================
+        // --- MODIFIKASI: Logika Mode Edit vs Mode Buat Baru ---
+        // ==========================================================
+
+        // Ambil objek checklist dari argumen (nama baru: checklist_obj)
+        val checklistFromArgs = arguments?.getParcelable<Checklist>("checklist_obj") // "checklist_obj" adalah kunci kita
+
+        if (checklistFromArgs == null) {
+            // MODE BUAT BARU (Tidak ada objek dikirim)
+            toolbar.title = "Buat Checklist Baru"
             activeItems.add(ChecklistItem(UUID.randomUUID().toString(), "", false))
             activeAdapter.notifyItemInserted(0)
         } else {
-            // MODE EDIT
-            loadChecklistData(checklistId) // <-- Fungsi ini dimodifikasi
-        }
+            // MODE EDIT (Objek diterima!)
+            toolbar.title = "Edit Checklist"
 
-        // --- Setup Listeners ---
+            editingChecklist = checklistFromArgs
+            etChecklistTitle.setText(checklistFromArgs.title)
+
+            checklistFromArgs.imagePath?.let { imageUrl ->
+                ivChecklistImage.load(imageUrl) { crossfade(true) }
+                frameLayoutChecklistImageContainer.visibility = View.VISIBLE
+                ivDeleteChecklistImage.visibility = View.VISIBLE
+            }
+
+            val (checked, active) = checklistFromArgs.items.partition { it.isChecked }
+            activeItems.clear()
+            activeItems.addAll(active)
+            activeAdapter.notifyDataSetChanged()
+            checkedItems.clear()
+            checkedItems.addAll(checked)
+            checkedAdapter.notifyDataSetChanged()
+        }
+        // ==========================================================
+        // --- AKHIR DARI BLOK PENGGANTI ---
+        // ==========================================================
+
+
+        // --- Setup Listeners (Tetap Sama) ---
         toolbar.setNavigationOnClickListener {
             findNavController().popBackStack()
         }
@@ -162,19 +187,19 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
             addNewItem()
         }
         btnSaveChecklist.setOnClickListener {
-            saveChecklistClicked() // <-- Fungsi ini dimodifikasi
+            saveChecklistClicked()
         }
         btnPickChecklistImage.setOnClickListener {
             val imageSourceBottomSheet = ImageSourceBottomSheetFragment()
             imageSourceBottomSheet.listener = this
             imageSourceBottomSheet.show(parentFragmentManager, ImageSourceBottomSheetFragment.TAG)
         }
-        // --- LOGIKA HAPUS GAMBAR (DIMODIFIKASI) ---
-        ivDeleteChecklistImage.setOnClickListener {
-            checklistImageUri = null // Hapus URI lokal baru (jika ada)
-            editingChecklist?.imagePath = null // Hapus URL online lama (jIKA mode edit)
 
-            ivChecklistImage.setImageURI(null) // Bersihkan tampilan
+        ivDeleteChecklistImage.setOnClickListener {
+            checklistImageUri = null
+            editingChecklist?.imagePath = null
+
+            ivChecklistImage.setImageURI(null)
             frameLayoutChecklistImageContainer.visibility = View.GONE
             ivDeleteChecklistImage.visibility = View.GONE
             Toast.makeText(requireContext(), "Gambar dihapus.", Toast.LENGTH_SHORT).show()
@@ -183,42 +208,11 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
         updateCheckedHeaderVisibility()
     }
 
-    // --- FUNGSI LOAD DATA (DIMODIFIKASI) ---
-    private fun loadChecklistData(checklistId: String) {
-        taskViewModel.getChecklistById(checklistId).observe(viewLifecycleOwner) { checklist ->
-            if (checklist != null) {
-                editingChecklist = checklist
-                etChecklistTitle.setText(checklist.title)
+    // --- MODIFIKASI: FUNGSI 'loadChecklistData' DIHAPUS ---
+    // (Kita tidak membutuhkannya lagi)
 
-                // --- LOGIKA MEMUAT GAMBAR (DIUBAH) ---
-                checklist.imagePath?.let { imageUrl ->
-                    // 'imageUrl' adalah URL 'https://...'
-                    // Kita TIDAK set 'checklistImageUri' di sini
 
-                    // Gunakan Coil untuk memuat URL online ke ImageView
-                    ivChecklistImage.load(imageUrl) {
-                        crossfade(true)
-                        placeholder(R.drawable.ic_add_circle) // Ganti dgn placeholder Anda
-                        error(R.drawable.ic_add_circle) // Ganti dgn gambar error Anda
-                    }
-                    frameLayoutChecklistImageContainer.visibility = View.VISIBLE
-                    ivDeleteChecklistImage.visibility = View.VISIBLE
-                }
-
-                // (Sisa kode Anda sudah benar)
-                val (checked, active) = checklist.items.partition { it.isChecked }
-                activeItems.clear()
-                activeItems.addAll(active)
-                activeAdapter.notifyDataSetChanged()
-                checkedItems.clear()
-                checkedItems.addAll(checked)
-                checkedAdapter.notifyDataSetChanged()
-                updateCheckedHeaderVisibility()
-            }
-        }
-    }
-
-    // --- FUNGSI SIMPAN (DIMODIFIKASI TOTAL) ---
+    // --- FUNGSI SIMPAN (Logika Anda sudah benar dan tidak diubah) ---
     private fun saveChecklistClicked() {
         updateActiveItemsFromViews()
         val title = etChecklistTitle.text.toString().trim()
@@ -231,39 +225,27 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
         val finalCheckedItems = checkedItems.filter { it.text.isNotBlank() }
         val allItems = finalActiveItems + finalCheckedItems
 
-        // --- LOGIKA BARU UNTUK UPLOAD ---
-
-        // Cek 1: Apakah user baru saja memilih gambar baru?
         if (checklistImageUri != null) {
-            // Ya, upload gambar baru
             uploadImageAndSave(title, allItems)
         } else {
-            // Tidak, user tidak memilih gambar baru.
-            // Cek 2: Apakah kita dalam mode edit?
             val existingImageUrl = if (editingChecklist != null) {
-                // Ya, ambil URL lama (bisa null jika dihapus)
                 editingChecklist!!.imagePath
             } else {
-                // Tidak, ini item baru tanpa gambar
                 null
             }
-            // Langsung simpan data dengan URL yang ada
             saveDataToFirebase(title, allItems, existingImageUrl)
         }
     }
 
-    // --- FUNGSI BARU 1: UPLOAD KE CLOUDINARY ---
+    // --- FUNGSI UPLOAD (Tidak diubah) ---
     private fun uploadImageAndSave(title: String, allItems: List<ChecklistItem>) {
         loadingDialog.show()
-
-        // Pastikan URI tidak null (meskipun sudah dicek)
         checklistImageUri?.let { uri ->
             MediaManager.get().upload(uri)
                 .callback(object : UploadCallback {
                     override fun onSuccess(requestId: String?, resultData: MutableMap<Any?, Any?>?) {
                         loadingDialog.dismiss()
                         val imageUrl = resultData?.get("secure_url") as? String
-                        // Setelah upload, simpan ke Firebase
                         saveDataToFirebase(title, allItems, imageUrl)
                     }
 
@@ -271,7 +253,6 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
                         loadingDialog.dismiss()
                         Toast.makeText(requireContext(), "Upload gambar gagal: ${error?.description}", Toast.LENGTH_LONG).show()
                     }
-
                     override fun onStart(requestId: String?) {}
                     override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
                     override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
@@ -280,16 +261,15 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
         }
     }
 
-    // --- FUNGSI BARU 2: SIMPAN KE FIREBASE ---
+    // --- FUNGSI SIMPAN KE FIREBASE (Tidak diubah) ---
     private fun saveDataToFirebase(title: String, allItems: List<ChecklistItem>, imageUrl: String?) {
-        // Cek apakah kita sedang 'Edit' atau 'Buat Baru'
         if (editingChecklist == null) {
             // MODE BUAT BARU
             val newChecklist = Checklist(
-                id = UUID.randomUUID().toString(), // ID akan diganti oleh Repository
+                id = UUID.randomUUID().toString(),
                 title = title,
                 createdDate = Date(),
-                imagePath = imageUrl, // URL online
+                imagePath = imageUrl,
                 items = allItems
             )
             taskViewModel.insertChecklist(newChecklist)
@@ -299,20 +279,18 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
             // MODE EDIT
             val updatedChecklist = editingChecklist!!.copy(
                 title = title,
-                imagePath = imageUrl, // URL online (bisa null jika dihapus)
+                imagePath = imageUrl,
                 items = allItems,
-                createdDate = editingChecklist!!.createdDate // Tetap pakai tanggal lama
+                createdDate = editingChecklist!!.createdDate
             )
             taskViewModel.updateChecklist(updatedChecklist)
             Toast.makeText(requireContext(), "Checklist Diperbarui!", Toast.LENGTH_SHORT).show()
         }
-
-        findNavController().popBackStack() // Kembali ke TaskListFragment
+        findNavController().popBackStack()
     }
 
-    // --- FUNGSI LAINNYA (TIDAK BERUBAH) ---
+    // --- FUNGSI LAINNYA (Tidak diubah) ---
     private fun addNewItem() {
-        // ... (kode Anda sudah benar)
         val newItem = ChecklistItem(UUID.randomUUID().toString(), "", false)
         activeItems.add(newItem)
         activeAdapter.notifyItemInserted(activeItems.size - 1)
@@ -320,7 +298,6 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
     }
 
     private fun updateCheckedHeaderVisibility() {
-        // ... (kode Anda sudah benar)
         if (checkedItems.isEmpty()) {
             divider.visibility = View.GONE
             tvCheckedHeader.visibility = View.GONE
@@ -331,7 +308,6 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
     }
 
     override fun onCheckChanged(position: Int, isChecked: Boolean) {
-        // ... (kode Anda sudah benar)
         try {
             if (isChecked) {
                 val item = activeItems.removeAt(position)
@@ -353,7 +329,6 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
     }
 
     override fun onDeleteClicked(position: Int, isFromActiveList: Boolean) {
-        // ... (kode Anda sudah benar)
         try {
             if (isFromActiveList) {
                 activeItems.removeAt(position)
@@ -368,13 +343,12 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
         }
     }
 
-    // --- FUNGSI KAMERA & GALERI (Tetap Sama) ---
+    // --- FUNGSI KAMERA & GALERI (Tidak diubah) ---
     private fun startCameraForChecklist() {
-        // ... (kode Anda sudah benar)
         val photoFile: File? = try {
             createChecklistImageFile()
         } catch (ignored: IOException) {
-            Toast.makeText(requireContext(), "Error saat membuat file gambar.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Error saat memuat file gambar.", Toast.LENGTH_SHORT).show()
             null
         }
         photoFile?.also {
@@ -389,7 +363,6 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
 
     @Throws(IOException::class)
     private fun createChecklistImageFile(): File {
-        // ... (kode Anda sudah benar)
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val storageDir: File? = File(requireContext().externalCacheDir, "photos").apply {
             if (!exists()) mkdirs()
@@ -404,7 +377,6 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
     }
 
     override fun onSourceSelected(source: String) {
-        // ... (kode Anda sudah benar)
         when (source) {
             ImageSourceBottomSheetFragment.SOURCE_CAMERA -> {
                 requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -414,24 +386,18 @@ class AddChecklistFragment : Fragment(), ChecklistItemListener, ImageSourceBotto
             }
         }
     }
-    // --- TAMBAHKAN FUNGSI HELPER BARU INI ---
-// Fungsi ini akan meng-scan RecyclerView dan 'memanen' teks dari EditText
+
+    // --- FUNGSI HELPER (Tidak diubah) ---
     private fun updateActiveItemsFromViews() {
         for (i in 0 until activeAdapter.itemCount) {
-            // Dapatkan ViewHolder untuk setiap item di adapter
             val viewHolder = rvActiveItems.findViewHolderForAdapterPosition(i) as? ChecklistItemAdapter.ChecklistItemViewHolder
 
             if (viewHolder != null) {
-                // Jika ViewHolder terlihat di layar, ambil teksnya
                 val text = viewHolder.editText.text.toString()
-
-                // Update list 'activeItems' secara manual
-                if (i < activeItems.size) { // Cek keamanan
+                if (i < activeItems.size) {
                     activeItems[i].text = text
                 }
             }
-            // Jika ViewHolder tidak terlihat (di-scroll), datanya
-            // seharusnya sudah tersimpan oleh TextWatcher
         }
     }
 }

@@ -157,6 +157,11 @@
         android:layout_gravity="start"
         android:background="#f5f5dc"
         app:headerLayout="@layout/nav_header"
-        app:menu="@menu/nav_menu" />
+        app:menu="@menu/nav_menu"
+        app:itemTextColor="@android:color/black"
+
+        app:itemIconTint="@android:color/black"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>

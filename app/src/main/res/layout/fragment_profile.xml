@@ -11,9 +11,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:background="#598a75"
-        android:padding="24dp"
-        tools:context=".ProfileFragment">
+        android:background="?attr/backgroundColor" android:padding="24dp"
+        tools:context=".fragments.ProfileFragment">
 
         <TextView
             android:id="@+id/textViewProfileTitle"
@@ -21,45 +20,37 @@
             android:layout_height="wrap_content"
             android:text="@string/label_prfile"
             android:textSize="30sp"
-            android:textColor="@android:color/black"
-            android:textStyle="bold"
+            android:textColor="?attr/textColor" android:textStyle="bold"
             android:layout_marginTop="30dp"
             android:layout_marginBottom="20dp" />
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivAvatar"
             android:layout_width="140dp"
             android:layout_height="140dp"
-            app:cardCornerRadius="70dp"
-            app:cardElevation="5dp"
-            android:layout_marginBottom="20dp">
-
-            <ImageView
-                android:id="@+id/imageViewProfile"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/incon"
-                android:background="@android:color/white"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="5dp"
-                android:contentDescription="@string/label_ftprfil"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/circular_border" />
-        </androidx.cardview.widget.CardView>
+            android:layout_marginBottom="20dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/incon"
+            android:background="?attr/cardColor"
+            android:padding="5dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="@string/label_ftprfil"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent"
+            app:strokeWidth="2dp"
+            app:strokeColor="?attr/textColor"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/etLayoutName"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
             android:layout_marginBottom="15dp"
             app:boxBackgroundMode="none"
-            android:hint="@string/hint_nama">
+            android:hint="@string/hint_nama"
+
+            app:hintTextAppearance="@style/MyHintStyle">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etName"
@@ -70,55 +61,63 @@
                 android:paddingVertical="12dp"
                 android:paddingStart="20dp"
                 android:paddingEnd="20dp"
-                android:singleLine="true"/>
+                android:singleLine="true"
+                android:textColor="?attr/textColor"
+                android:textColorHint="?attr/hintColor"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/etLayoutEmail"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
             android:layout_marginBottom="15dp"
-            android:hint="@string/hint_email_text"
-            app:boxBackgroundMode="none">
+            app:boxBackgroundMode="none"
+            android:hint="EMAIL"
+
+            app:hintTextAppearance="@style/MyHintStyle">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress"
                 android:gravity="center"
                 android:background="@drawable/rounded_edittext_background"
                 android:paddingVertical="12dp"
                 android:paddingStart="20dp"
                 android:paddingEnd="20dp"
-                android:singleLine="true"/>
+                android:singleLine="true"
+                android:enabled="false" android:textColor="?attr/textColor"
+                android:textColorHint="?attr/hintColor"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/etLayoutPassword"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:layout_marginHorizontal="20dp"
-            android:layout_marginBottom="30dp"
-            android:hint="@string/hint_password_text"
-            app:boxBackgroundMode="none">
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="30dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPassword"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/labelDarkMode"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword"
-                android:gravity="center"
-                android:background="@drawable/rounded_edittext_background"
-                android:paddingVertical="12dp"
-                android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:layout_marginBottom="50dp"
-                android:singleLine="true"/>
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_weight="1"
+                android:text="MODE GELAP"
+                android:textColor="?attr/textColor"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchDarkMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:checked="true" />
+        </LinearLayout>
+
 
         <Button
             android:id="@+id/buttonSimpan"
@@ -126,11 +125,23 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
-            android:backgroundTint="#F5F5DC"
-            android:paddingVertical="12dp"
+            android:backgroundTint="@color/black" android:paddingVertical="12dp"
             android:stateListAnimator="@null"
             android:text="@string/btn_saveprf"
-            android:textColor="@android:color/black"
+            android:textColor="@android:color/white" android:textSize="18sp"
+            app:cornerRadius="25dp" />
+
+        <Button
+            android:id="@+id/btnLogout"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="15dp"
+            android:backgroundTint="@color/black"
+            android:paddingVertical="12dp"
+            android:stateListAnimator="@null"
+            android:text="LOGOUT" android:textColor="@android:color/white"
             android:textSize="18sp"
             app:cornerRadius="25dp" />
 
