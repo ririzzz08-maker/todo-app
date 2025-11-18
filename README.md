@@ -7,14 +7,14 @@ Ini adalah proyek Ujian Akhir Semester (UAS) untuk mata kuliah **Pemrograman Mob
 
 ## 👥 Tim Penyusun (Kelompok 4)
 
-**Mahendra Alwi F.** (24050974102)
-**Indrianto Rizal P.** (24050974104)
-**Rivaldo Fajar A.** (24050974122)
-**Hanydhar Rose M.** (24050974123)
+* **Mahendra Alwi F.** (24050974102)
+* **Indrianto Rizal P.** (24050974104)
+* **Rivaldo Fajar A.** (24050974122)
+* **Hanydhar Rose M.** (24050974123)
 
-**Program Studi:** S1 Pendidikan Teknologi Informasi
-**Institusi:** Universitas Negeri Surabaya (UNESA)
-**Dosen Pengampu:** Rizky Basatha, S.Pd., M.MT
+* **Program Studi:** S1 Pendidikan Teknologi Informasi
+* **Institusi:** Universitas Negeri Surabaya (UNESA)
+* **Dosen Pengampu:** Rizky Basatha, S.Pd., M.MT
 
 ---
 
@@ -47,13 +47,13 @@ Proyek ini memodifikasi aplikasi dasar dengan menambahkan beberapa fungsionalita
 
 ## Teknologi yang Digunakan
 
-**Bahasa:** Kotlin 
-**IDE:** Android Studio
-**Database:** Firebase & Cloudinary Database
-**Perangkat Uji Coba:** Smartphone Android (Android 15) [cite: 79]
+* **Bahasa:** Kotlin 
+* **IDE:** Android Studio
+* **Database:** Firebase & Cloudinary Database
+* **Perangkat Uji Coba:** Smartphone Android (Android 15) [cite: 79]
 
 ## Penghargaan & Lisensi (Acknowledgements)
 
 PENTING: Proyek ini tidak dibuat dari nol. Proyek ini menggunakan fondasi dan struktur dasar dari 
-**Repositori Asli:** [**android-gradle-kotlin-app-template**](https://github.com/jaredsburrows/android-gradle-kotlin-app-template)
-**Kreator Asli:** [**jaredsburrows**](https://github.com/jaredsburrows)
+* **Repositori Asli:** [**android-gradle-kotlin-app-template**](https://github.com/jaredsburrows/android-gradle-kotlin-app-template)
+* **Kreator Asli:** [**jaredsburrows**](https://github.com/jaredsburrows)
