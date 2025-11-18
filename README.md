@@ -1,61 +1,59 @@
-~~## TODO/Note App Tutorial MVVM | Room DB | Android Studio Kotlin
+# Modifikasi Aplikasi To-Do App (Project UAS)
+
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Android-green.svg)
+
+Ini adalah proyek Ujian Akhir Semester (UAS) untuk mata kuliah **Pemrograman Mobile**. Proyek ini berfokus pada modifikasi aplikasi To-Do sederhana menjadi aplikasi yang lebih fungsional dengan antarmuka pengguna (UI) yang responsif dan fitur-fitur baru.
+
+## 👥 Tim Penyusun (Kelompok 4)
+
+**Mahendra Alwi F.** (24050974102)
+**Indrianto Rizal P.** (24050974104)
+**Rivaldo Fajar A.** (24050974122)
+**Hanydhar Rose M.** (24050974123)
+
+**Program Studi:** S1 Pendidikan Teknologi Informasi
+**Institusi:** Universitas Negeri Surabaya (UNESA)
+**Dosen Pengampu:** Rizky Basatha, S.Pd., M.MT
+
+---
+
+## Tampilan Aplikasi (Setelah Modifikasi)
+
+Bagian ini menunjukkan antarmuka pengguna (UI) baru setelah dimodifikasi dari desain awal.
+
+| Tampilan Login | Tampilan Utama (Mode Gelap) | Tampilan Tambah Tugas (dengan Gambar) |
+| :---: | :---: | :---: |
+| ![Tampilan Login](link-ke-screenshot-login.png) | ![Tampilan Utama Baru](link-ke-screenshot-home-baru.png) | ![Tampilan Tambah Tugas](link-ke-screenshot-tambah-tugas.png) |
 
 
-Welcome to the Comprehensive TODO/Note App Tutorial Playlist! 📱📝
+## Fitur Proyek
 
-In this tutorial playlist, you'll learn how to create a robust TODO/Note App from scratch using the power of MVVM architecture and Room Database with Kotlin in Android Studio. Whether you're a beginner or seeking to enhance your skills, this playlist covers it all.
+Proyek ini memodifikasi aplikasi dasar dengan menambahkan beberapa fungsionalitas utama.
 
-## 📌Part 1: Designing Insert, Update, and View Dialogs
-Discover the fundamentals as we des~~ign intuitive dialogs for adding, updating, and viewing notes/tasks.
+### Fitur Awal (Dari Aplikasi Dasar)
+* [cite_start]Antarmuka pengguna yang sederhana[cite: 46].
+* [cite_start]Fungsi CRUD (Create, Read, Update, Delete) dasar[cite: 51].
+* [cite_start]Fitur pencarian (Search)[cite: 48].
+* [cite_start]Fitur pengurutan (Sorting)[cite: 47].
 
-## 📌Part 2: MVVM, Room DB, Design Loading Dialog and Validation
-Delve into MVVM architecture, Room Database integration, loading dialogs, and data validation.
+### Fitur Modifikasi & Tambahan (Hasil Proyek)
+* [cite_start]**Desain Ulang UI/UX:** Memodifikasi total tampilan UI agar lebih modern, nyaman, dan responsif (mengganti font, warna, dan layout)[cite: 66].
+* [cite_start]**Fitur Login Pengguna:** Menambahkan sistem login untuk keamanan dan sinkronisasi data[cite: 31, 68].
+* [cite_start]**Sinkronisasi Database:** Menggunakan Firebase untuk menyimpan data catatan sehingga bisa diakses antar perangkat[cite: 35, 69, 76].
+* [cite_start]**Import Gambar:** Pengguna kini dapat melampirkan gambar atau foto ke dalam catatan mereka[cite: 37, 67].
+* [cite_start]**Mode Terang/Gelap (Dark Mode):** Menambahkan opsi untuk mengubah tema tampilan aplikasi[cite: 70, 82].
+* [cite_start]**Penambahan Logo Aplikasi:** Memberikan identitas visual baru pada aplikasi[cite: 36].
 
-## 📌Part 3: Insert Task Implementation
-Learn how to seamlessly insert tasks into the app using MVVM and Room Database.
+## Teknologi yang Digunakan
 
-## 📌Part 4: View Task List Implementation
-Explore displaying tasks using RecyclerView, optimizing the user experience.
+**Bahasa:** Kotlin 
+**IDE:** Android Studio
+**Database:** Firebase & Cloudinary Database
+**Perangkat Uji Coba:** Smartphone Android (Android 15) [cite: 79]
 
-## 📌Part 5: Delete Task Implementation
-Master the art of deleting tasks effortlessly with MVVM and Room Database.
+## Penghargaan & Lisensi (Acknowledgements)
 
-## 📌Part 6: Update Task Implementation
-Dive into updating tasks seamlessly using MVVM and Room Database.
-
-## 📌Part 7: View Binding in RecyclerView
-Simplify UI development with View Binding in RecyclerView for smoother interactions.
-
-## 📌Part 8: ListAdapter, DiffUtil in RecyclerView
-Optimize your app's UI and performance with ListAdapter and DiffUtil.
-
-## 📌Part 9: Refactoring TaskRepository for Improved Performance
-Enhance app performance through efficient data handling and coroutine management.
-
-## 📌Part 10: Implementing Task Search
-Master the power of search functionality in your app using MVVM and Room Database.
-
-## 📌Part 11: Restoring Deleted Tasks
-Implement the ability to restore accidentally deleted tasks for a seamless user experience.
-
-## 📌Part 12: Enhancing UI with AppBar and RecyclerView
-Elevate your app's UI with dynamic AppBar integration and smooth scrolling.
-
-## 📌Part 13: MVVM, Room DB, Sort By Task
-Learn to sort tasks effectively using MVVM architecture and Room Database.
-
-## 📌Part 14: Nested ScrollView RecyclerView
-Enhance your app's interface with Nested ScrollView and RecyclerView for efficient data presentation.
-
-## 📌Part 15: Staggered Grid & Linear Layout Managers
-Discover the art of engaging layouts using Staggered Grid and Linear Layout Managers.
-
-
-## Support the Project
-
-If you find this tutorial series helpful and would like to support the development of more content, consider buying me a coffee! Your support helps in creating high-quality tutorials.
-
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-orange?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/codingmeet)
-
-Your generosity is greatly appreciated! Thank you for supporting this project.
-
+PENTING: Proyek ini tidak dibuat dari nol. Proyek ini menggunakan fondasi dan struktur dasar dari 
+**Repositori Asli:** [**android-gradle-kotlin-app-template**](https://github.com/jaredsburrows/android-gradle-kotlin-app-template)
+**Kreator Asli:** [**jaredsburrows**](https://github.com/jaredsburrows)
