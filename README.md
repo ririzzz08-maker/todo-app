@@ -32,18 +32,17 @@ Bagian ini menunjukkan antarmuka pengguna (UI) baru setelah dimodifikasi dari de
 Proyek ini memodifikasi aplikasi dasar dengan menambahkan beberapa fungsionalitas utama.
 
 ### Fitur Awal (Dari Aplikasi Dasar)
-* [cite_start]Antarmuka pengguna yang sederhana[cite: 46].
-* [cite_start]Fungsi CRUD (Create, Read, Update, Delete) dasar[cite: 51].
-* [cite_start]Fitur pencarian (Search)[cite: 48].
-* [cite_start]Fitur pengurutan (Sorting)[cite: 47].
+* Antarmuka pengguna yang sederhana
+* Fitur pencarian (Search)
+* Fitur pengurutan (Sorting)
 
 ### Fitur Modifikasi & Tambahan (Hasil Proyek)
-* [cite_start]**Desain Ulang UI/UX:** Memodifikasi total tampilan UI agar lebih modern, nyaman, dan responsif (mengganti font, warna, dan layout)[cite: 66].
-* [cite_start]**Fitur Login Pengguna:** Menambahkan sistem login untuk keamanan dan sinkronisasi data[cite: 31, 68].
-* [cite_start]**Sinkronisasi Database:** Menggunakan Firebase untuk menyimpan data catatan sehingga bisa diakses antar perangkat[cite: 35, 69, 76].
-* [cite_start]**Import Gambar:** Pengguna kini dapat melampirkan gambar atau foto ke dalam catatan mereka[cite: 37, 67].
-* [cite_start]**Mode Terang/Gelap (Dark Mode):** Menambahkan opsi untuk mengubah tema tampilan aplikasi[cite: 70, 82].
-* [cite_start]**Penambahan Logo Aplikasi:** Memberikan identitas visual baru pada aplikasi[cite: 36].
+* **Desain Ulang UI/UX:** Memodifikasi total tampilan UI agar lebih baik, nyaman, dan responsif (mengganti font, warna, dan layout)
+* **Fitur Login Pengguna:** Menambahkan sistem login untuk keamanan dan sinkronisasi data
+* **Sinkronisasi Database:** Menggunakan Firebase untuk menyimpan data catatan 
+* **Import Gambar:** Pengguna kini dapat melampirkan gambar atau foto ke dalam catatan mereka
+* **Mode Terang/Gelap (Dark Mode):** Menambahkan opsi untuk mengubah tema tampilan aplikasi
+* **Penambahan Logo Aplikasi:** Memberikan identitas visual baru pada aplikasi
 
 ## Teknologi yang Digunakan
 
