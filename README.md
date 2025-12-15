@@ -15,6 +15,7 @@ Ini adalah proyek Ujian Akhir Semester (UAS) untuk mata kuliah **Pemrograman Mob
 * **Program Studi:** S1 Pendidikan Teknologi Informasi
 * **Institusi:** Universitas Negeri Surabaya (UNESA)
 * **Dosen Pengampu:** Rizky Basatha, S.Pd., M.MT
+* I Gusti Lanang Putra Eka Prismana, S.Kom., M.Kom
 
 ---
 ## Fitur Proyek
@@ -34,12 +35,16 @@ Proyek ini memodifikasi aplikasi dasar dengan menambahkan beberapa fungsionalita
 * **Mode Terang/Gelap (Dark Mode):** Menambahkan opsi untuk mengubah tema tampilan aplikasi
 * **Penambahan Logo Aplikasi:** Memberikan identitas visual baru pada aplikasi
 
+### Tampilan Aplikasi setelah modifikasi
+
+<img width="641" height="345" alt="Screenshot 2025-12-03 125541" src="https://github.com/user-attachments/assets/fe91579a-6420-462f-8c61-558bdaaa01a6" />
+
 ## Teknologi yang Digunakan
 
 * **Bahasa:** Kotlin 
 * **IDE:** Android Studio
 * **Database:** Firebase & Cloudinary Database
-* **Perangkat Uji Coba:** Smartphone Android (Android 15) [cite: 79]
+* **Perangkat Uji Coba:** Smartphone Android (Android 15) 
 
 ## Penghargaan & Lisensi (Acknowledgements)
 
