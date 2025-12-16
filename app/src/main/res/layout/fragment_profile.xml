@@ -48,9 +48,7 @@
             android:layout_marginHorizontal="20dp"
             android:layout_marginBottom="15dp"
             app:boxBackgroundMode="none"
-            android:hint="@string/hint_nama"
-
-            app:hintTextAppearance="@style/MyHintStyle">
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etName"
@@ -62,6 +60,7 @@
                 android:paddingStart="20dp"
                 android:paddingEnd="20dp"
                 android:singleLine="true"
+                android:hint="@string/hint_nama"
                 android:textColor="?attr/textColor"
                 android:textColorHint="?attr/hintColor"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -74,8 +73,7 @@
             android:layout_marginHorizontal="20dp"
             android:layout_marginBottom="15dp"
             app:boxBackgroundMode="none"
-            android:hint="EMAIL"
-
+            app:hintEnabled="false"
             app:hintTextAppearance="@style/MyHintStyle">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -88,6 +86,7 @@
                 android:paddingStart="20dp"
                 android:paddingEnd="20dp"
                 android:singleLine="true"
+                android:hint="@string/hint_Email"
                 android:enabled="false" android:textColor="?attr/textColor"
                 android:textColorHint="?attr/hintColor"/>
         </com.google.android.material.textfield.TextInputLayout>

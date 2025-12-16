@@ -8,6 +8,7 @@
     <string name="hint_jdllist_text"> Judul To Do List </string>
     <string name="hint_isi_text"> masukkan isi catatan </string>
     <string name="hint_nama">NAMA</string>
+    <string name="hint_Email">EMAIL</string>
     <string name="hint_itemlist">Item List</string>
     <string name="btn_password_text">Password</string>
     <string name="btn_register_text">Daftar?</string>
